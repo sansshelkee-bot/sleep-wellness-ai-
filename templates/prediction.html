@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction Result & AI Diagnosis - SleepTwin AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Top Action Bar -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-light text-muted border">Assessment #{{ assessment.id }}</span>
+                <span class="text-muted small">&bull; {{ assessment.created_at.strftime('%B %d, %Y at %H:%M') }}</span>
+            </div>
+            <h2 class="fw-bold text-dark mb-0">AI Prediction & Sleep Diagnostics</h2>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('report.download_report', assessment_id=assessment.id) }}" class="btn btn-outline-danger rounded-pill px-3 shadow-sm">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF Report
+            </a>
+            <a href="{{ url_for('digital_twin.digital_twin_view') }}" class="btn btn-outline-primary rounded-pill px-3">
+                <i class="bi bi-person-bounding-box me-1"></i> View Digital Twin
+            </a>
+            <a href="{{ url_for('simulator.simulator_view') }}" class="btn btn-primary rounded-pill px-3 shadow-sm">
+                <i class="bi bi-sliders me-1"></i> What-If Simulator
+            </a>
+        </div>
+    </div>
+
+    <!-- Row 1: Core Prediction Card & Sleep Health Score -->
+    <div class="row g-4 mb-4">
+        <!-- Predicted Disorder & Confidence -->
+        <div class="col-lg-7">
+            <div class="card card-custom h-100 p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div class="stat-label">Model Classification Output</div>
+                        <h3 class="fw-bold text-dark mb-0">Predicted Sleep State</h3>
+                    </div>
+                    <span class="badge bg-light text-muted border small">Voting Ensemble (CatBoost)</span>
+                </div>
+
+                <div class="p-4 rounded-4 mb-4 text-center {% if prediction.predicted_disorder == 'None' %}bg-success-subtle border border-success-subtle{% elif prediction.predicted_disorder == 'Insomnia' %}bg-warning-subtle border border-warning-subtle{% else %}bg-danger-subtle border border-danger-subtle{% endif %}">
+                    <span class="text-uppercase fw-bold small text-muted d-block mb-1">Diagnosed Condition</span>
+                    <h1 class="display-5 fw-extrabold mb-1 {% if prediction.predicted_disorder == 'None' %}text-success{% elif prediction.predicted_disorder == 'Insomnia' %}text-warning-emphasis{% else %}text-danger{% endif %}">
+                        {{ prediction.predicted_disorder }}
+                    </h1>
+                    <div class="fs-6 fw-semibold text-muted">
+                        Confidence: <span class="text-dark">{{ (prediction.confidence * 100) | round(1) }}%</span>
+                    </div>
+                </div>
+
+                <!-- Probability Distribution Bars -->
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between small fw-semibold text-muted mb-2">
+                        <span>Class Probabilities</span>
+                        <span>Model Output Distribution</span>
+                    </div>
+
+                    <!-- Healthy / None -->
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span><i class="bi bi-shield-check text-success me-1"></i> None (Healthy)</span>
+                            <span class="fw-bold">{{ (prediction.prob_none * 100) | round(1) }}%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ (prediction.prob_none * 100) | round(1) }}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Insomnia -->
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span><i class="bi bi-clock-history text-warning me-1"></i> Insomnia</span>
+                            <span class="fw-bold">{{ (prediction.prob_insomnia * 100) | round(1) }}%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ (prediction.prob_insomnia * 100) | round(1) }}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Sleep Apnea -->
+                    <div class="mb-1">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span><i class="bi bi-lungs text-danger me-1"></i> Sleep Apnea</span>
+                            <span class="fw-bold">{{ (prediction.prob_apnea * 100) | round(1) }}%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: {{ (prediction.prob_apnea * 100) | round(1) }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sleep Health Score (0-100) -->
+        <div class="col-lg-5">
+            <div class="card card-custom h-100 p-4 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="stat-label">Deterministic Health Index</div>
+                        <span class="badge bg-{{ score.color_class }}-subtle text-{{ score.color_class }} border border-{{ score.color_class }}-subtle">
+                            {{ score.category }}
+                        </span>
+                    </div>
+
+                    <div class="text-center my-3">
+                        <div class="score-circle {{ score.category | lower | replace(' ', '') }}">
+                            <div class="score-number">{{ score.overall_score }}</div>
+                            <div class="score-max">OUT OF 100</div>
+                        </div>
+                        <div class="fw-bold text-dark mt-2">{{ score.badge_text }}</div>
+                    </div>
+
+                    <!-- Component Subscores -->
+                    <div class="mt-3 pt-2 border-top">
+                        <div class="d-flex justify-content-between small py-1 border-bottom">
+                            <span class="text-muted"><i class="bi bi-moon me-1"></i> Sleep Duration</span>
+                            <span class="fw-bold">{{ score.breakdown.sleep_duration }} / 100</span>
+                        </div>
+                        <div class="d-flex justify-content-between small py-1 border-bottom">
+                            <span class="text-muted"><i class="bi bi-star me-1"></i> Sleep Quality</span>
+                            <span class="fw-bold">{{ score.breakdown.sleep_quality }} / 100</span>
+                        </div>
+                        <div class="d-flex justify-content-between small py-1 border-bottom">
+                            <span class="text-muted"><i class="bi bi-activity me-1"></i> Stress Management</span>
+                            <span class="fw-bold">{{ score.breakdown.stress_management }} / 100</span>
+                        </div>
+                        <div class="d-flex justify-content-between small py-1 border-bottom">
+                            <span class="text-muted"><i class="bi bi-person-walking me-1"></i> Activity & Steps</span>
+                            <span class="fw-bold">{{ score.breakdown.physical_activity }} / 100</span>
+                        </div>
+                        <div class="d-flex justify-content-between small py-1">
+                            <span class="text-muted"><i class="bi bi-heart me-1"></i> Cardiovascular/BMI</span>
+                            <span class="fw-bold">{{ score.breakdown.cardiovascular_wellness }} / 100</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Explainable AI (SHAP) -->
+    <div class="card card-custom p-4 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3 pb-2 border-bottom">
+            <div>
+                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-3 py-1 rounded-pill mb-1">
+                    <i class="bi bi-diagram-2 me-1"></i> Explainable AI (SHAP TreeExplainer)
+                </span>
+                <h4 class="fw-bold text-dark mb-0">Feature Attribution & Decision Factors</h4>
+            </div>
+            <span class="text-muted small">
+                Calculated dynamically via CatBoost Shapley values
+            </span>
+        </div>
+
+        <p class="text-muted small mb-4">
+            SHAP (SHapley Additive exPlanations) measures how much each personal, lifestyle, and physiological parameter pushed the machine learning model toward the predicted condition.
+        </p>
+
+        <div class="row g-4 align-items-center">
+            <!-- SHAP Factors List -->
+            <div class="col-lg-7">
+                <div class="list-group list-group-flush">
+                    {% for factor in shap_factors %}
+                        <div class="list-group-item px-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div class="fw-bold text-dark">
+                                    {{ factor.feature_name }}
+                                    <span class="badge bg-light text-dark border ms-2 small">{{ factor.feature_value }}</span>
+                                </div>
+                                <div>
+                                    <span class="badge {% if factor.contribution_level == 'High' %}bg-danger-subtle text-danger border border-danger-subtle{% elif factor.contribution_level == 'Moderate' %}bg-warning-subtle text-warning-emphasis border border-warning-subtle{% else %}bg-secondary-subtle text-secondary border border-secondary-subtle{% endif %} me-1">
+                                        {{ factor.contribution_level }} Contribution
+                                    </span>
+                                    <span class="badge {% if 'Increases' in factor.direction %}bg-danger text-white{% else %}bg-success text-white{% endif %} small">
+                                        {{ factor.direction }}
+                                    </span>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-0">{{ factor.explanation_text }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- SHAP Bar Chart -->
+            <div class="col-lg-5">
+                <div class="p-3 bg-light rounded-4 border" style="min-height: 280px; position: relative;">
+                    <div class="small fw-bold text-muted mb-2 text-center">Top Factors Relative Importance</div>
+                    <canvas id="shapChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="alert alert-light border mt-3 mb-0 py-2 small text-muted">
+            <i class="bi bi-info-circle me-1 text-primary"></i> These factors influenced the model's prediction. They do not represent a medical diagnosis.
+        </div>
+    </div>
+
+    <!-- Row 3: Future Risk Indicator -->
+    {% if future_risk %}
+    <div class="card card-custom p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <div>
+                <span class="stat-label">Early Awareness Metric</span>
+                <h4 class="fw-bold text-dark mb-0">Future Wellness Risk Estimation</h4>
+            </div>
+            <span class="badge {% if future_risk.risk_level == 'Low' %}bg-success{% elif future_risk.risk_level == 'Moderate' %}bg-warning text-dark{% else %}bg-danger{% endif %} px-3 py-2 fs-6">
+                {{ future_risk.risk_level }} Risk ({{ future_risk.risk_score | round(0) | int }}/100)
+            </span>
+        </div>
+
+        <div class="row g-4 align-items-center">
+            <div class="col-md-6">
+                <h6 class="fw-semibold text-dark mb-2">Identified Risk Drivers:</h6>
+                <ul class="list-group list-group-flush small">
+                    {% for factor in future_risk.primary_risk_factors.split(';') %}
+                        {% if factor.strip() %}
+                            <li class="list-group-item px-0 py-2 text-muted">
+                                <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> {{ factor.strip() }}
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 bg-light rounded-3 border">
+                    <h6 class="fw-semibold text-dark mb-2"><i class="bi bi-compass me-1 text-primary"></i> Trajectory & Guidance</h6>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="small text-muted">Progress Trajectory:</span>
+                        <span class="badge bg-light text-dark border">{{ future_risk.risk_trajectory }}</span>
+                    </div>
+                    <p class="text-muted small mb-0">{{ future_risk.preventive_guidance }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="form-text small text-muted mt-2">
+            <i class="bi bi-shield-check me-1"></i> This is an estimated wellness risk indicator based on current available data, not a medical forecast.
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Row 4: Personalized 4-Pillar Recommendations -->
+    <div class="card card-custom p-4 mb-4">
+        <div class="mb-3 pb-2 border-bottom">
+            <span class="stat-label">Personalized Recovery Engine</span>
+            <h4 class="fw-bold text-dark mb-1">Tailored Sleep Wellness Plan</h4>
+            <p class="text-muted small mb-0">Dynamic recommendations generated specifically from your assessment features and predicted condition.</p>
+        </div>
+
+        <div class="row g-3">
+            <!-- Pillar 1: Immediate Actions -->
+            <div class="col-md-6">
+                <div class="h-100 p-3 bg-light rounded-3 border">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-lightning-charge-fill text-primary me-2"></i> Immediate Actions (Tonight)</h6>
+                    {% for r in grouped_recs['Immediate Actions'] %}
+                        <div class="recommendation-card {{ r.priority }} py-2 px-3 small">
+                            <span class="badge bg-light text-muted border me-1">{{ r.priority }} Priority</span>
+                            {{ r.recommendation_text }}
+                        </div>
+                    {% else %}
+                        <p class="text-muted small">Maintain regular sleep timing tonight.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Pillar 2: Lifestyle Improvements -->
+            <div class="col-md-6">
+                <div class="h-100 p-3 bg-light rounded-3 border">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-bicycle text-success me-2"></i> Lifestyle & Daily Routine</h6>
+                    {% for r in grouped_recs['Lifestyle Improvements'] %}
+                        <div class="recommendation-card {{ r.priority }} py-2 px-3 small">
+                            <span class="badge bg-light text-muted border me-1">{{ r.priority }}</span>
+                            {{ r.recommendation_text }}
+                        </div>
+                    {% else %}
+                        <p class="text-muted small">Continue regular daytime physical movement.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Pillar 3: Sleep Habits -->
+            <div class="col-md-6">
+                <div class="h-100 p-3 bg-light rounded-3 border">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-moon-stars-fill text-secondary me-2"></i> Circadian Habits & Hygiene</h6>
+                    {% for r in grouped_recs['Sleep Habits'] %}
+                        <div class="recommendation-card {{ r.priority }} py-2 px-3 small">
+                            <span class="badge bg-light text-muted border me-1">{{ r.priority }}</span>
+                            {{ r.recommendation_text }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Pillar 4: When to Seek Help -->
+            <div class="col-md-6">
+                <div class="h-100 p-3 bg-light rounded-3 border">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-hospital-fill text-danger me-2"></i> Clinical Advice & Screening</h6>
+                    {% for r in grouped_recs['When to Seek Professional Help'] %}
+                        <div class="recommendation-card {{ r.priority }} py-2 px-3 small">
+                            <span class="badge bg-light text-muted border me-1">{{ r.priority }}</span>
+                            {{ r.recommendation_text }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const ctx = document.getElementById('shapChart');
+    if (!ctx) return;
+
+    const labels = [
+        {% for f in shap_factors %}
+            "{{ f.feature_name }}",
+        {% endfor %}
+    ];
+
+    const values = [
+        {% for f in shap_factors %}
+            {{ (f.shap_value | abs) | round(4) }},
+        {% endfor %}
+    ];
+
+    const colors = [
+        {% for f in shap_factors %}
+            "{% if 'Increases' in f.direction %}#ef4444{% else %}#10b981{% endif %}",
+        {% endfor %}
+    ];
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'SHAP |Magnitude|',
+                data: values,
+                backgroundColor: colors,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Absolute SHAP Contribution' }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

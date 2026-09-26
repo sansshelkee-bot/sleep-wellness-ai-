@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Sleep Assessment - SleepTwin AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+
+            <!-- Title & Overview -->
+            <div class="mb-4">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill mb-2">
+                    <i class="bi bi-heart-pulse me-1"></i> Multi-Parameter Health Ingestion
+                </span>
+                <h2 class="fw-bold text-dark mb-1">Comprehensive Sleep Health Assessment</h2>
+                <p class="text-muted small mb-0">
+                    Input your physiological, lifestyle, and sleep parameters. Our ensemble ML model will predict disorder probability and immediately synchronize your virtual Digital Twin.
+                </p>
+            </div>
+
+            <div class="card card-custom p-4 p-md-5 mb-4">
+                <form id="assessmentForm">
+                    
+                    <!-- Section 1: Personal Demographics -->
+                    <div class="mb-4 pb-3 border-bottom">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="stat-icon primary p-2" style="width: 34px; height: 34px; font-size: 1rem;"><i class="bi bi-person"></i></span>
+                            <h5 class="fw-bold text-dark mb-0">1. Demographic Information</h5>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="age" class="form-label small fw-semibold text-muted">
+                                    Age (Years) <i class="bi bi-question-circle text-muted" data-bs-toggle="tooltip" title="Age influences baseline circadian rhythm and sleep architecture."></i>
+                                </label>
+                                <input type="number" class="form-control" id="age" name="age" min="18" max="100" value="{{ latest.age if latest else (user.age or 35) }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="gender" class="form-label small fw-semibold text-muted">Biological Gender</label>
+                                <select class="form-select" id="gender" name="gender" required>
+                                    <option value="Male" {% if (latest and latest.gender == 'Male') or (user and user.gender == 'Male') %}selected{% endif %}>Male</option>
+                                    <option value="Female" {% if (latest and latest.gender == 'Female') or (user and user.gender == 'Female') %}selected{% endif %}>Female</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="occupation" class="form-label small fw-semibold text-muted">Occupation</label>
+                                <select class="form-select" id="occupation" name="occupation" required>
+                                    {% set occ = latest.occupation if latest else (user.occupation or 'Software Engineer') %}
+                                    <option value="Software Engineer" {% if occ == 'Software Engineer' %}selected{% endif %}>Software Engineer</option>
+                                    <option value="Doctor" {% if occ == 'Doctor' %}selected{% endif %}>Doctor</option>
+                                    <option value="Nurse" {% if occ == 'Nurse' %}selected{% endif %}>Nurse</option>
+                                    <option value="Teacher" {% if occ == 'Teacher' %}selected{% endif %}>Teacher</option>
+                                    <option value="Engineer" {% if occ == 'Engineer' %}selected{% endif %}>Engineer</option>
+                                    <option value="Lawyer" {% if occ == 'Lawyer' %}selected{% endif %}>Lawyer</option>
+                                    <option value="Accountant" {% if occ == 'Accountant' %}selected{% endif %}>Accountant</option>
+                                    <option value="Salesperson" {% if occ == 'Salesperson' %}selected{% endif %}>Salesperson</option>
+                                    <option value="Scientist" {% if occ == 'Scientist' %}selected{% endif %}>Scientist</option>
+                                    <option value="Manager" {% if occ == 'Manager' %}selected{% endif %}>Manager</option>
+                                    <option value="Other" {% if occ == 'Other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Sleep Architecture -->
+                    <div class="mb-4 pb-3 border-bottom">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="stat-icon secondary p-2" style="width: 34px; height: 34px; font-size: 1rem;"><i class="bi bi-moon-stars"></i></span>
+                            <h5 class="fw-bold text-dark mb-0">2. Sleep Metrics</h5>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="sleep_duration" class="form-label small fw-semibold text-muted mb-0">
+                                        Sleep Duration (Hours/Night)
+                                    </label>
+                                    <span class="slider-value-badge" id="val_sleep_duration">{{ latest.sleep_duration if latest else 7.0 }} hrs</span>
+                                </div>
+                                <input type="range" class="form-range" id="sleep_duration" name="sleep_duration" min="4.0" max="10.0" step="0.1" value="{{ latest.sleep_duration if latest else 7.0 }}">
+                                <div class="d-flex justify-content-between text-muted small" style="font-size: 11px;">
+                                    <span>4 hrs (Deficit)</span>
+                                    <span>7–8 hrs (Recommended)</span>
+                                    <span>10 hrs</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="quality_of_sleep" class="form-label small fw-semibold text-muted mb-0">
+                                        Perceived Sleep Quality (1 to 10)
+                                    </label>
+                                    <span class="slider-value-badge" id="val_quality_of_sleep">{{ latest.quality_of_sleep if latest else 7 }} / 10</span>
+                                </div>
+                                <input type="range" class="form-range" id="quality_of_sleep" name="quality_of_sleep" min="1" max="10" step="1" value="{{ latest.quality_of_sleep if latest else 7 }}">
+                                <div class="d-flex justify-content-between text-muted small" style="font-size: 11px;">
+                                    <span>1 (Poor / Restless)</span>
+                                    <span>5 (Average)</span>
+                                    <span>10 (Deep / Restorative)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Lifestyle & Physical Activity -->
+                    <div class="mb-4 pb-3 border-bottom">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="stat-icon success p-2" style="width: 34px; height: 34px; font-size: 1rem;"><i class="bi bi-activity"></i></span>
+                            <h5 class="fw-bold text-dark mb-0">3. Lifestyle & Physical Activity</h5>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="stress_level" class="form-label small fw-semibold text-muted mb-0">
+                                        Stress Level (1 to 10)
+                                    </label>
+                                    <span class="slider-value-badge" id="val_stress_level">{{ latest.stress_level if latest else 5 }} / 10</span>
+                                </div>
+                                <input type="range" class="form-range" id="stress_level" name="stress_level" min="1" max="10" step="1" value="{{ latest.stress_level if latest else 5 }}">
+                                <div class="d-flex justify-content-between text-muted small" style="font-size: 11px;">
+                                    <span>1 (Calm)</span>
+                                    <span>10 (Overwhelmed)</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="physical_activity_level" class="form-label small fw-semibold text-muted mb-0">
+                                        Active Minutes / Day
+                                    </label>
+                                    <span class="slider-value-badge" id="val_activity">{{ latest.physical_activity_level | int if latest else 45 }} mins</span>
+                                </div>
+                                <input type="range" class="form-range" id="physical_activity_level" name="physical_activity_level" min="0" max="120" step="5" value="{{ latest.physical_activity_level | int if latest else 45 }}">
+                                <div class="d-flex justify-content-between text-muted small" style="font-size: 11px;">
+                                    <span>0 min (Sedentary)</span>
+                                    <span>120 mins</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="daily_steps" class="form-label small fw-semibold text-muted mb-0">
+                                        Daily Steps
+                                    </label>
+                                    <span class="slider-value-badge" id="val_steps">{{ latest.daily_steps | default(6500) }} steps</span>
+                                </div>
+                                <input type="range" class="form-range" id="daily_steps" name="daily_steps" min="1000" max="15000" step="500" value="{{ latest.daily_steps | default(6500) }}">
+                                <div class="d-flex justify-content-between text-muted small" style="font-size: 11px;">
+                                    <span>1,000</span>
+                                    <span>8,000+ (Target)</span>
+                                    <span>15,000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Physiological & Cardiovascular Indicators -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="stat-icon danger p-2" style="width: 34px; height: 34px; font-size: 1rem;"><i class="bi bi-heart"></i></span>
+                            <h5 class="fw-bold text-dark mb-0">4. Physiological & Cardiovascular Profile</h5>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="bmi_category" class="form-label small fw-semibold text-muted">
+                                    BMI Category <i class="bi bi-question-circle text-muted" data-bs-toggle="tooltip" title="Body Mass Index correlates strongly with airway compliance and apnea risk."></i>
+                                </label>
+                                <select class="form-select" id="bmi_category" name="bmi_category" required>
+                                    {% set bmicat = latest.bmi_category if latest else 'Normal' %}
+                                    <option value="Normal" {% if 'Normal' in bmicat %}selected{% endif %}>Normal (18.5 - 24.9)</option>
+                                    <option value="Overweight" {% if 'Overweight' in bmicat %}selected{% endif %}>Overweight (25.0 - 29.9)</option>
+                                    <option value="Obese" {% if 'Obese' in bmicat %}selected{% endif %}>Obese (30.0+)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="blood_pressure" class="form-label small fw-semibold text-muted">
+                                    Blood Pressure (mmHg)
+                                </label>
+                                <input type="text" class="form-control" id="blood_pressure" name="blood_pressure" placeholder="e.g. 120/80" value="{{ latest.blood_pressure if latest else '120/80' }}" pattern="^\d{2,3}/\d{2,3}$" title="Format: Systolic/Diastolic (e.g. 120/80)" required>
+                                <div class="form-text small">Standard format: Systolic/Diastolic (e.g. 120/80)</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="heart_rate" class="form-label small fw-semibold text-muted">
+                                    Resting Heart Rate (BPM)
+                                </label>
+                                <input type="number" class="form-control" id="heart_rate" name="heart_rate" min="40" max="130" value="{{ latest.heart_rate if latest else 70 }}" required>
+                                <div class="form-text small">Healthy resting average: 60 - 80 BPM</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid mt-4">
+                        <button type="submit" id="submitAssessmentBtn" class="btn btn-primary btn-lg rounded-pill py-3 fw-bold shadow">
+                            <i class="bi bi-cpu-fill me-2"></i> Compute Prediction & Synchronize Digital Twin
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/assessment.js') }}"></script>
+<script>
+    // Initialize tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+</script>
+{% endblock %}

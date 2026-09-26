@@ -1,0 +1,34 @@
+{
+    "model_name": "CatBoost Sleep Disorder Classifier",
+    "version": "1.2.0",
+    "architecture": "Gradient Boosted Decision Trees",
+    "target_classes": [
+        "None",
+        "Insomnia",
+        "Sleep Apnea"
+    ],
+    "feature_count": 25,
+    "numerical_features": [
+        "Age",
+        "Sleep Duration",
+        "Quality of Sleep",
+        "Physical Activity Level",
+        "Stress Level",
+        "Heart Rate",
+        "Daily Steps",
+        "Systolic_BP",
+        "Diastolic_BP"
+    ],
+    "categorical_features": [
+        "Gender",
+        "Occupation",
+        "BMI Category"
+    ],
+    "selected_algorithm": "Voting Ensemble",
+    "frameworks": [
+        "CatBoost 1.2",
+        "scikit-learn 1.9",
+        "SHAP 0.52"
+    ],
+    "disclaimer": "This system is intended for educational and wellness awareness purposes and does not replace professional medical diagnosis."
+}

@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}SleepTwin AI - Intelligent Sleep Disorder Prediction & Digital Twin System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Hero Section -->
+    <div class="row align-items-center py-5 mb-5 g-5">
+        <div class="col-lg-7">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold mb-3">
+                <i class="bi bi-cpu me-1"></i> AI-Powered Personalized Health Informatics
+            </span>
+            <h1 class="display-4 fw-extrabold text-dark tracking-tight mb-3">
+                Understand Your Sleep. <br>
+                <span class="text-primary">Predict Risks.</span> <br>
+                Improve Your Wellness.
+            </h1>
+            <p class="lead text-muted mb-4 fs-5">
+                An intelligent sleep wellness platform combining <b>Machine Learning</b>, <b>Explainable AI (SHAP)</b>, and <b>Digital Twin technology</b> to continuously monitor sleep health, explain risks, and guide preventative lifestyle recovery.
+            </p>
+            <div class="d-flex flex-wrap gap-3 mb-4">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm">
+                    <i class="bi bi-lightning-charge me-1"></i> Get Started Free
+                </a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary btn-lg rounded-pill px-4">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                </a>
+                <a href="{{ url_for('auth.login') }}?demo=true" class="btn btn-light btn-lg rounded-pill px-4 border text-primary fw-semibold">
+                    <i class="bi bi-play-circle me-1"></i> Launch Demo Account
+                </a>
+            </div>
+            <div class="d-flex align-items-center gap-4 text-muted small pt-2">
+                <div><i class="bi bi-check-circle-fill text-success me-1"></i> 15,000 Validated Samples</div>
+                <div><i class="bi bi-check-circle-fill text-success me-1"></i> 96.7% Ensemble Accuracy</div>
+                <div><i class="bi bi-check-circle-fill text-success me-1"></i> Zero Black-Box Decisions</div>
+            </div>
+        </div>
+        <div class="col-lg-5 text-center">
+            <div class="twin-avatar-box shadow-sm">
+                <div class="twin-pulse">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <h4 class="fw-bold mb-1">Your Virtual Sleep Twin</h4>
+                <p class="text-muted small mb-3">Continuous physiological & sleep state modeling</p>
+                
+                <div class="twin-metric-pill">
+                    <span class="text-muted small"><i class="bi bi-moon me-1 text-primary"></i> Sleep Quality</span>
+                    <span class="fw-bold text-dark">8.4 / 10</span>
+                </div>
+                <div class="twin-metric-pill">
+                    <span class="text-muted small"><i class="bi bi-heart-pulse me-1 text-danger"></i> Resting HR</span>
+                    <span class="fw-bold text-dark">68 bpm</span>
+                </div>
+                <div class="twin-metric-pill">
+                    <span class="text-muted small"><i class="bi bi-shield-check me-1 text-success"></i> Health Score</span>
+                    <span class="fw-bold text-success">86 / 100</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core System Pillars -->
+    <div class="row g-4 mb-5">
+        <div class="col-12 text-center mb-3">
+            <h6 class="text-uppercase text-primary fw-bold letter-spacing">System Architecture & Modules</h6>
+            <h2 class="fw-bold text-dark">Comprehensive Sleep Health Intelligence</h2>
+            <p class="text-muted mx-auto" style="max-width: 650px;">
+                Designed to solve the limitations of one-time assessment tools through continuous state tracking, explainability, and counterfactual simulation.
+            </p>
+        </div>
+
+        <!-- Pillar 1: ML Prediction -->
+        <div class="col-md-4">
+            <div class="card card-custom h-100 p-4">
+                <div class="stat-icon primary mb-3">
+                    <i class="bi bi-diagram-3"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">1. Sleep Disorder Prediction</h5>
+                <p class="text-muted small mb-3">
+                    Multi-class classification using CatBoost and Voting Ensemble models to predict <b>None (Healthy)</b>, <b>Insomnia</b>, or <b>Sleep Apnea</b> with rigorous probabilistic confidence.
+                </p>
+                <div class="mt-auto">
+                    <span class="badge bg-light text-primary border">CatBoost + Soft Voting</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pillar 2: Digital Twin -->
+        <div class="col-md-4">
+            <div class="card card-custom h-100 p-4 border-primary">
+                <div class="stat-icon secondary mb-3">
+                    <i class="bi bi-person-bounding-box"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">2. Dynamic Digital Twin</h5>
+                <p class="text-muted small mb-3">
+                    A continuously synchronizing computational representation of the user's sleep architecture, autonomic stress, metabolic state, and cardiovascular indicators over time.
+                </p>
+                <div class="mt-auto">
+                    <span class="badge bg-primary text-white">Continuous State Engine</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pillar 3: Explainable AI -->
+        <div class="col-md-4">
+            <div class="card card-custom h-100 p-4">
+                <div class="stat-icon success mb-3">
+                    <i class="bi bi-lightbulb"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">3. Explainable AI (SHAP)</h5>
+                <p class="text-muted small mb-3">
+                    Computes exact game-theoretic Shapley Additive exPlanations to demystify why the model arrived at each prediction, ranking top positive and negative risk contributors.
+                </p>
+                <div class="mt-auto">
+                    <span class="badge bg-light text-success border">SHAP TreeExplainer</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pillar 4: Sleep Health Score -->
+        <div class="col-md-4">
+            <div class="card card-custom h-100 p-4">
+                <div class="stat-icon warning mb-3">
+                    <i class="bi bi-speedometer"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">4. Sleep Health Score (0-100)</h5>
+                <p class="text-muted small mb-3">
+                    Deterministic holistic scoring combining sleep duration, restorative quality, stress management, daytime movement, and cardiovascular indices into intuitive categories.
+                </p>
+                <div class="mt-auto">
+                    <span class="badge bg-light text-warning border text-dark">Deterministic Formula</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pillar 5: What-if Simulator -->
+        <div class="col-md-4">
+            <div class="card card-custom h-100 p-4">
+                <div class="stat-icon primary mb-3">
+                    <i class="bi bi-sliders"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">5. What-If Simulator</h5>
+                <p class="text-muted small mb-3">
+                    Interactive counterfactual simulator allowing users to modify bedtime, stress reduction, and physical activity parameters to visualize potential wellness improvements in real time.
+                </p>
+                <div class="mt-auto">
+                    <span class="badge bg-light text-primary border">In-Memory Scenario Engine</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pillar 6: Personalized Guidance & PDF -->
+        <div class="col-md-4">
+            <div class="card card-custom h-100 p-4">
+                <div class="stat-icon danger mb-3">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">6. Clinical PDF Report & Guidance</h5>
+                <p class="text-muted small mb-3">
+                    Generates 4-pillar actionable wellness interventions (Immediate Actions, Lifestyle Habits, Hygiene, Clinical Consultation) and downloadable ReportLab PDF summaries.
+                </p>
+                <div class="mt-auto">
+                    <span class="badge bg-light text-danger border">Automated ReportLab Engine</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Future Extension: Wearable / IoT Architecture Section -->
+    <div class="card card-custom bg-white p-4 p-lg-5 mb-5 border-0 shadow-sm">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-6">
+                <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill fw-semibold mb-2">
+                    <i class="bi bi-smartwatch me-1"></i> Future Extension Architecture
+                </span>
+                <h3 class="fw-bold text-dark mb-3">IoT & Wearable Integration Pipeline</h3>
+                <p class="text-muted mb-3">
+                    While the current system ingests validated clinical/lifestyle assessments, the architectural layer is designed with ready endpoints for streaming telemetry from smart bands, Apple Watch, and Fitbit.
+                </p>
+                <ul class="list-unstyled text-muted small">
+                    <li class="mb-2"><i class="bi bi-check2 text-primary me-2 fw-bold"></i> <b>Smartwatch Telemetry:</b> Photoplethysmography (PPG) Heart Rate & SpO2 streaming</li>
+                    <li class="mb-2"><i class="bi bi-check2 text-primary me-2 fw-bold"></i> <b>IoT Sensors:</b> Nocturnal acoustic sensors for snore and apnea detection</li>
+                    <li class="mb-2"><i class="bi bi-check2 text-primary me-2 fw-bold"></i> <b>Digital Twin Pipeline:</b> Automated nightly synchronizations without manual input</li>
+                </ul>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="p-4 bg-light rounded-4 border">
+                    <div class="d-flex justify-content-around align-items-center">
+                        <div class="text-center">
+                            <i class="bi bi-smartwatch fs-1 text-primary"></i>
+                            <div class="small fw-semibold mt-1">Wearable Sensor</div>
+                        </div>
+                        <i class="bi bi-arrow-right fs-3 text-muted"></i>
+                        <div class="text-center">
+                            <i class="bi bi-cloud-arrow-up fs-1 text-secondary"></i>
+                            <div class="small fw-semibold mt-1">REST API Ingestion</div>
+                        </div>
+                        <i class="bi bi-arrow-right fs-3 text-muted"></i>
+                        <div class="text-center">
+                            <i class="bi bi-cpu fs-1 text-success"></i>
+                            <div class="small fw-semibold mt-1">Digital Twin Engine</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

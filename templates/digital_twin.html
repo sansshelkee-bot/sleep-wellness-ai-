@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}My Digital Twin - SleepTwin AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Digital Twin Header Banner -->
+    <div class="card card-custom p-4 mb-4 border-primary bg-white shadow-sm">
+        <div class="row align-items-center g-4">
+            <div class="col-md-3 text-center">
+                <div class="twin-pulse" style="width: 100px; height: 100px; font-size: 2.5rem; margin-bottom: 0.5rem;">
+                    <i class="bi bi-person-bounding-box"></i>
+                </div>
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill small">
+                    <i class="bi bi-broadcast me-1"></i> Twin Synchronized
+                </span>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-primary text-white">Virtual Persona</span>
+                    <span class="text-muted small">Updated: {{ twin_data.twin.updated_at or 'Pending' }}</span>
+                </div>
+                <h3 class="fw-bold text-dark mb-1">{{ user.full_name }}'s Digital Sleep Twin</h3>
+                <p class="text-muted small mb-2">
+                    A computational state model continuously synchronizing with your sleep architecture, autonomic balance, and cardiovascular indicators.
+                </p>
+                <div class="d-flex flex-wrap gap-3 small text-muted">
+                    <div><b>Age / Gender:</b> {{ user.age }} yrs, {{ user.gender }}</div>
+                    <div><b>Occupation:</b> {{ user.occupation }}</div>
+                    <div><b>Assessments Synced:</b> {{ twin_data.twin.total_assessments }}</div>
+                </div>
+            </div>
+            <div class="col-md-3 text-center text-md-end">
+                <a href="{{ url_for('prediction.assessment_form') }}" class="btn btn-primary rounded-pill px-4 shadow-sm mb-2">
+                    <i class="bi bi-arrow-repeat me-1"></i> Sync New Data
+                </a>
+                <div>
+                    <a href="{{ url_for('simulator.simulator_view') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                        <i class="bi bi-sliders me-1"></i> What-If Simulation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quad-Quadrant Computational State -->
+    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-cpu text-primary me-2"></i> Current Virtual State Matrices</h5>
+    <div class="row g-3 mb-4">
+        <!-- 1. Sleep Architecture Matrix -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-custom h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label mb-0">Sleep Architecture</span>
+                    <i class="bi bi-moon-stars text-primary fs-5"></i>
+                </div>
+                <div class="p-3 bg-light rounded-3 mb-2">
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="text-muted">Sleep Duration:</span>
+                        <span class="fw-bold text-dark">{{ twin_data.twin.current_sleep_duration }} hrs</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Quality Score:</span>
+                        <span class="fw-bold text-dark">{{ twin_data.twin.current_quality_of_sleep }} / 10</span>
+                    </div>
+                </div>
+                <div class="small text-muted">
+                    Restorative efficiency: 
+                    {% if twin_data.twin.current_sleep_duration >= 7.0 and twin_data.twin.current_quality_of_sleep >= 7 %}
+                        <span class="text-success fw-semibold">Optimal</span>
+                    {% elif twin_data.twin.current_sleep_duration >= 6.0 %}
+                        <span class="text-warning fw-semibold">Moderate</span>
+                    {% else %}
+                        <span class="text-danger fw-semibold">Deficit State</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Autonomic & Stress State -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-custom h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label mb-0">Autonomic Stress</span>
+                    <i class="bi bi-activity text-danger fs-5"></i>
+                </div>
+                <div class="p-3 bg-light rounded-3 mb-2">
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="text-muted">Stress Index:</span>
+                        <span class="fw-bold text-dark">{{ twin_data.twin.current_stress_level }} / 10</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Resting HR:</span>
+                        <span class="fw-bold text-dark">{{ twin_data.twin.current_heart_rate }} bpm</span>
+                    </div>
+                </div>
+                <div class="small text-muted">
+                    Sympathetic tone: 
+                    {% if twin_data.twin.current_stress_level <= 4 %}
+                        <span class="text-success fw-semibold">Regulated</span>
+                    {% elif twin_data.twin.current_stress_level <= 6 %}
+                        <span class="text-warning fw-semibold">Elevated</span>
+                    {% else %}
+                        <span class="text-danger fw-semibold">Hyper-Arousal</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Physical & Metabolic Matrix -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-custom h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label mb-0">Metabolic & Motion</span>
+                    <i class="bi bi-person-walking text-success fs-5"></i>
+                </div>
+                <div class="p-3 bg-light rounded-3 mb-2">
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="text-muted">Daily Steps:</span>
+                        <span class="fw-bold text-dark">{{ twin_data.twin.current_daily_steps }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Active Mins:</span>
+                        <span class="fw-bold text-dark">{{ twin_data.twin.current_activity_level }} min</span>
+                    </div>
+                </div>
+                <div class="small text-muted">
+                    Energy expenditure: 
+                    {% if twin_data.twin.current_daily_steps >= 8000 %}
+                        <span class="text-success fw-semibold">Active</span>
+                    {% else %}
+                        <span class="text-warning fw-semibold">Low Active</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Cardiovascular State -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-custom h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label mb-0">Cardiovascular Health</span>
+                    <i class="bi bi-heart text-danger fs-5"></i>
+                </div>
+                <div class="p-3 bg-light rounded-3 mb-2">
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="text-muted">Blood Pressure:</span>
+                        <span class="fw-bold text-dark">{{ twin_data.twin.current_blood_pressure }} mmHg</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">BMI Classification:</span>
+                        <span class="fw-bold text-dark">{{ twin_data.twin.current_bmi_category }}</span>
+                    </div>
+                </div>
+                <div class="small text-muted">
+                    Hemodynamic profile: 
+                    <span class="text-dark fw-semibold">{{ twin_data.twin.current_bmi_category }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Diagnostic Synchronization State -->
+    <div class="row g-4 mb-4">
+        <!-- Current AI Diagnostic State -->
+        <div class="col-lg-6">
+            <div class="card card-custom h-100 p-4">
+                <div class="card-header-clean px-0 pt-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-check text-primary"></i>
+                        <span class="fw-bold text-dark">AI Diagnostic Mirror</span>
+                    </div>
+                    <span class="badge bg-light text-muted border">Ensemble Inference</span>
+                </div>
+
+                <div class="row g-3 my-2">
+                    <div class="col-sm-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="text-muted small d-block">Current Classified State:</span>
+                            <span class="fs-5 fw-bold {% if twin_data.twin.current_predicted_disorder == 'None' %}text-success{% elif twin_data.twin.current_predicted_disorder == 'Insomnia' %}text-warning-emphasis{% else %}text-danger{% endif %}">
+                                {{ twin_data.twin.current_predicted_disorder }}
+                            </span>
+                            <div class="small text-muted">Confidence: {{ twin_data.twin.current_confidence }}%</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="text-muted small d-block">Sleep Health Score:</span>
+                            <span class="fs-5 fw-bold text-primary">{{ twin_data.twin.current_health_score }} / 100</span>
+                            <div class="small text-muted">
+                                Baseline: {{ twin_data.twin.baseline_health_score }} ({{ '+' if twin_data.delta_score >= 0 else '' }}{{ twin_data.delta_score }} pts)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Future Risk Status -->
+                <div class="p-3 bg-light rounded-3 border mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted small fw-semibold">Future Disorder Risk Index:</span>
+                        <span class="badge {% if twin_data.twin.current_future_risk == 'Low' %}bg-success{% elif twin_data.twin.current_future_risk == 'Moderate' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                            {{ twin_data.twin.current_future_risk }} Risk
+                        </span>
+                    </div>
+                    {% if future_risk %}
+                        <p class="small text-muted mb-0">{{ future_risk.preventive_guidance }}</p>
+                    {% else %}
+                        <p class="small text-muted mb-0">Complete your next assessment to refresh predictive trajectory.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Top SHAP Drivers -->
+                {% if shap_factors %}
+                    <h6 class="small fw-bold text-muted text-uppercase mb-2">Key Model Decision Drivers (SHAP):</h6>
+                    <div class="list-group list-group-flush">
+                        {% for factor in shap_factors %}
+                            <div class="list-group-item px-0 py-1 small d-flex justify-content-between align-items-center">
+                                <span class="text-dark">{{ factor.feature_name }} ({{ factor.feature_value }})</span>
+                                <span class="badge {% if 'Increases' in factor.direction %}bg-danger-subtle text-danger border border-danger-subtle{% else %}bg-success-subtle text-success border border-success-subtle{% endif %}">
+                                    {{ factor.direction }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Historical Progression Chart -->
+        <div class="col-lg-6">
+            <div class="card card-custom h-100 p-4">
+                <div class="card-header-clean px-0 pt-0 mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-graph-up-arrow text-success"></i>
+                        <span class="fw-bold text-dark">Twin Evolution Over Time</span>
+                    </div>
+                    <span class="badge bg-light text-muted border">Health Score Trajectory</span>
+                </div>
+                <div style="min-height: 300px; position: relative;">
+                    <canvas id="scoreTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Future Extension: IoT & Wearable Hardware Architecture -->
+    <div class="card card-custom p-4 bg-light border">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="stat-icon secondary p-2" style="width: 32px; height: 32px; font-size: 1rem;"><i class="bi bi-smartwatch"></i></span>
+            <h5 class="fw-bold text-dark mb-0">Hardware Extension Placeholder: Wearable & IoT Streaming</h5>
+        </div>
+        <p class="text-muted small mb-3">
+            In future production phases, this Digital Twin is designed to consume continuous wearable biometrics from consumer devices (Apple HealthKit, Google Health Connect, Fitbit Web API) without manual data entry.
+        </p>
+        <div class="row g-3 text-center">
+            <div class="col-md-3">
+                <div class="p-3 bg-white rounded-3 border">
+                    <i class="bi bi-watch text-primary fs-3 d-block mb-1"></i>
+                    <div class="fw-bold small">Smartwatch SDK</div>
+                    <div class="text-muted" style="font-size: 11px;">Resting HR, HRV, Actigraphy</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-white rounded-3 border">
+                    <i class="bi bi-broadcast-pin text-secondary fs-3 d-block mb-1"></i>
+                    <div class="fw-bold small">Nocturnal Bed Sensor</div>
+                    <div class="text-muted" style="font-size: 11px;">Acoustic snoring & tossing</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-white rounded-3 border">
+                    <i class="bi bi-hdd-network text-success fs-3 d-block mb-1"></i>
+                    <div class="fw-bold small">REST Telemetry API</div>
+                    <div class="text-muted" style="font-size: 11px;">Async batch & WebSocket sync</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-white rounded-3 border">
+                    <i class="bi bi-robot text-danger fs-3 d-block mb-1"></i>
+                    <div class="fw-bold small">Automated Interventions</div>
+                    <div class="text-muted" style="font-size: 11px;">Predictive daytime alerts</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

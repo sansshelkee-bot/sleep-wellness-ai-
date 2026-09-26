@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Environment Variables & Secrets (Keep .env.example tracked)
+.env
+.env.local
+.env.*.local
+
+# CatBoost & ML Training Logs
+catboost_info/
+
+# Databases & local runtimes
+instance/
+*.sqlite3
+*.db-journal
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Generated
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary & Test Reports
+.pytest_cache/
+.coverage
+htmlcov/

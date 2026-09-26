@@ -1,0 +1,161 @@
+{
+    "selected_model": "Voting Ensemble",
+    "best_f1_score": 0.967,
+    "target_classes": [
+        "None",
+        "Insomnia",
+        "Sleep Apnea"
+    ],
+    "feature_names": [
+        "Age",
+        "Sleep Duration",
+        "Quality of Sleep",
+        "Physical Activity Level",
+        "Stress Level",
+        "Heart Rate",
+        "Daily Steps",
+        "Systolic_BP",
+        "Diastolic_BP",
+        "Gender_Female",
+        "Gender_Male",
+        "Occupation_Accountant",
+        "Occupation_Doctor",
+        "Occupation_Engineer",
+        "Occupation_Lawyer",
+        "Occupation_Manager",
+        "Occupation_Nurse",
+        "Occupation_Sales Representative",
+        "Occupation_Salesperson",
+        "Occupation_Scientist",
+        "Occupation_Software Engineer",
+        "Occupation_Teacher",
+        "BMI Category_Normal",
+        "BMI Category_Obese",
+        "BMI Category_Overweight"
+    ],
+    "total_samples": 15000,
+    "train_samples": 12000,
+    "test_samples": 3000,
+    "models": {
+        "CatBoost": {
+            "accuracy": 0.9647,
+            "precision": 0.9648,
+            "recall": 0.9647,
+            "f1_score": 0.9646,
+            "roc_auc": 0.9957,
+            "confusion_matrix": [
+                [
+                    946,
+                    27,
+                    27
+                ],
+                [
+                    13,
+                    970,
+                    17
+                ],
+                [
+                    16,
+                    6,
+                    978
+                ]
+            ]
+        },
+        "Random Forest": {
+            "accuracy": 0.963,
+            "precision": 0.963,
+            "recall": 0.963,
+            "f1_score": 0.963,
+            "roc_auc": 0.9959,
+            "confusion_matrix": [
+                [
+                    949,
+                    25,
+                    26
+                ],
+                [
+                    15,
+                    973,
+                    12
+                ],
+                [
+                    23,
+                    10,
+                    967
+                ]
+            ]
+        },
+        "Gradient Boosting": {
+            "accuracy": 0.9647,
+            "precision": 0.9647,
+            "recall": 0.9647,
+            "f1_score": 0.9646,
+            "roc_auc": 0.9961,
+            "confusion_matrix": [
+                [
+                    951,
+                    26,
+                    23
+                ],
+                [
+                    14,
+                    970,
+                    16
+                ],
+                [
+                    20,
+                    7,
+                    973
+                ]
+            ]
+        },
+        "Decision Tree": {
+            "accuracy": 0.9327,
+            "precision": 0.933,
+            "recall": 0.9327,
+            "f1_score": 0.9327,
+            "roc_auc": 0.9741,
+            "confusion_matrix": [
+                [
+                    942,
+                    33,
+                    25
+                ],
+                [
+                    47,
+                    925,
+                    28
+                ],
+                [
+                    43,
+                    26,
+                    931
+                ]
+            ]
+        },
+        "Voting Ensemble": {
+            "accuracy": 0.967,
+            "precision": 0.967,
+            "recall": 0.967,
+            "f1_score": 0.967,
+            "roc_auc": 0.9962,
+            "confusion_matrix": [
+                [
+                    949,
+                    26,
+                    25
+                ],
+                [
+                    13,
+                    974,
+                    13
+                ],
+                [
+                    16,
+                    6,
+                    978
+                ]
+            ]
+        }
+    }
+}

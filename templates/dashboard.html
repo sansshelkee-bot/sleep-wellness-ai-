@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - SleepTwin AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Top Greeting & Action Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Welcome, {{ user.full_name }}</h2>
+            <p class="text-muted small mb-0">
+                <i class="bi bi-clock me-1"></i> Continuous Sleep Wellness Monitoring &bull; 
+                {% if twin_data.twin.total_assessments > 0 %}
+                    Synchronized with {{ twin_data.twin.total_assessments }} assessment(s)
+                {% else %}
+                    No assessments recorded yet
+                {% endif %}
+            </p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('prediction.assessment_form') }}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-circle me-1"></i> New Assessment
+            </a>
+            <a href="{{ url_for('simulator.simulator_view') }}" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-sliders me-1"></i> What-If Simulator
+            </a>
+            {% if latest %}
+                <a href="{{ url_for('report.download_latest_report') }}" class="btn btn-outline-danger rounded-pill px-3">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 6 KPI Metric Cards -->
+    <div class="row g-3 mb-4">
+        <!-- 1. Predicted Disorder -->
+        <div class="col-sm-6 col-lg-4 col-xl-2">
+            <div class="stat-card">
+                <div class="stat-icon {% if twin_data.twin.current_predicted_disorder == 'None' %}success{% elif twin_data.twin.current_predicted_disorder == 'Insomnia' %}warning{% elif twin_data.twin.current_predicted_disorder == 'Sleep Apnea' %}danger{% else %}primary{% endif %}">
+                    <i class="bi bi-heart-pulse"></i>
+                </div>
+                <div>
+                    <div class="stat-label">AI Prediction</div>
+                    <div class="stat-value fs-5">
+                        {% if twin_data.twin.current_predicted_disorder %}
+                            {{ twin_data.twin.current_predicted_disorder }}
+                        {% else %}
+                            Pending
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Sleep Health Score -->
+        <div class="col-sm-6 col-lg-4 col-xl-2">
+            <div class="stat-card">
+                <div class="stat-icon {% if twin_data.twin.current_health_score >= 70 %}success{% elif twin_data.twin.current_health_score >= 40 %}warning{% else %}danger{% endif %}">
+                    <i class="bi bi-speedometer2"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Health Score</div>
+                    <div class="stat-value fs-5">
+                        {{ twin_data.twin.current_health_score }} <span class="fs-6 text-muted">/100</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Future Risk -->
+        <div class="col-sm-6 col-lg-4 col-xl-2">
+            <div class="stat-card">
+                <div class="stat-icon {% if twin_data.twin.current_future_risk == 'Low' %}success{% elif twin_data.twin.current_future_risk == 'Moderate' %}warning{% else %}danger{% endif %}">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Future Risk</div>
+                    <div class="stat-value fs-5">
+                        {{ twin_data.twin.current_future_risk }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Latest Sleep Duration -->
+        <div class="col-sm-6 col-lg-4 col-xl-2">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="bi bi-moon-stars"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Sleep Duration</div>
+                    <div class="stat-value fs-5">
+                        {{ twin_data.twin.current_sleep_duration }} <span class="fs-6 text-muted">hrs</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Stress Level -->
+        <div class="col-sm-6 col-lg-4 col-xl-2">
+            <div class="stat-card">
+                <div class="stat-icon {% if twin_data.twin.current_stress_level <= 4 %}success{% elif twin_data.twin.current_stress_level <= 6 %}warning{% else %}danger{% endif %}">
+                    <i class="bi bi-activity"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Stress Level</div>
+                    <div class="stat-value fs-5">
+                        {{ twin_data.twin.current_stress_level }} <span class="fs-6 text-muted">/10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Quality of Sleep -->
+        <div class="col-sm-6 col-lg-4 col-xl-2">
+            <div class="stat-card">
+                <div class="stat-icon secondary">
+                    <i class="bi bi-star"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Sleep Quality</div>
+                    <div class="stat-value fs-5">
+                        {{ twin_data.twin.current_quality_of_sleep }} <span class="fs-6 text-muted">/10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <!-- Sleep Health Score Trend -->
+        <div class="col-lg-6">
+            <div class="card card-custom h-100">
+                <div class="card-header-clean">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-graph-up text-primary"></i>
+                        <span>Sleep Health Score Evolution</span>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">0–100 Scale</span>
+                </div>
+                <div class="card-body p-3" style="min-height: 280px; position: relative;">
+                    <canvas id="scoreTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sleep Duration vs Stress -->
+        <div class="col-lg-6">
+            <div class="card card-custom h-100">
+                <div class="card-header-clean">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-bezier2 text-success"></i>
+                        <span>Sleep Duration vs. Autonomic Stress</span>
+                    </div>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle small">Multi-Axis Trend</span>
+                </div>
+                <div class="card-body p-3" style="min-height: 280px; position: relative;">
+                    <canvas id="sleepStressChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Charts & Quick Insights Row -->
+    <div class="row g-4 mb-4">
+        <!-- Activity & Steps Chart -->
+        <div class="col-lg-8">
+            <div class="card card-custom h-100">
+                <div class="card-header-clean">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-bar-chart-line text-indigo"></i>
+                        <span>Physical Activity & Step Volume</span>
+                    </div>
+                    <span class="badge bg-light text-muted border small">Daytime Expenditure</span>
+                </div>
+                <div class="card-body p-3" style="min-height: 260px; position: relative;">
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Digital Twin Snapshot Card -->
+        <div class="col-lg-4">
+            <div class="card card-custom h-100 p-4 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-dark mb-0">Digital Twin Status</h6>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                            <i class="bi bi-circle-fill me-1 small" style="font-size: 8px;"></i> Active Mirror
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        Your virtual twin updates with every sleep assessment to track physiological adaptation and early disorder precursors.
+                    </p>
+                    <div class="p-3 bg-light rounded-3 mb-3 border">
+                        <div class="d-flex justify-content-between mb-1 small">
+                            <span class="text-muted">Baseline Score:</span>
+                            <span class="fw-bold">{{ twin_data.twin.baseline_health_score }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1 small">
+                            <span class="text-muted">Current Score:</span>
+                            <span class="fw-bold text-primary">{{ twin_data.twin.current_health_score }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">Total Progress Delta:</span>
+                            {% if twin_data.delta_score >= 0 %}
+                                <span class="fw-bold text-success">+{{ twin_data.delta_score }} pts</span>
+                            {% else %}
+                                <span class="fw-bold text-danger">{{ twin_data.delta_score }} pts</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('digital_twin.digital_twin_view') }}" class="btn btn-outline-primary rounded-pill py-2 small fw-semibold">
+                        <i class="bi bi-person-bounding-box me-1"></i> Inspect Full Digital Twin
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Assessments Table -->
+    <div class="card card-custom">
+        <div class="card-header-clean">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-table text-primary"></i>
+                <span>Recent Sleep Assessments</span>
+            </div>
+            <a href="{{ url_for('dashboard.history_view') }}" class="btn btn-sm btn-link text-decoration-none">
+                View All History <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Date</th>
+                        <th>Duration</th>
+                        <th>Quality</th>
+                        <th>Stress</th>
+                        <th>Steps</th>
+                        <th>BP (mmHg)</th>
+                        <th>Predicted Disorder</th>
+                        <th>Health Score</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in recent_assessments %}
+                        <tr>
+                            <td class="ps-4 fw-medium text-muted small">
+                                {{ a.created_at.strftime('%b %d, %Y %H:%M') }}
+                                {% if a.is_demo %}
+                                    <span class="badge bg-light text-muted border ms-1">DEMO</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ a.sleep_duration }}h</td>
+                            <td>{{ a.quality_of_sleep }}/10</td>
+                            <td>{{ a.stress_level }}/10</td>
+                            <td>{{ a.daily_steps | default(0) }}</td>
+                            <td>{{ a.blood_pressure }}</td>
+                            <td>
+                                {% if a.prediction %}
+                                    <span class="badge {% if a.prediction.predicted_disorder == 'None' %}bg-success-subtle text-success border border-success-subtle{% elif a.prediction.predicted_disorder == 'Insomnia' %}bg-warning-subtle text-warning-emphasis border border-warning-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %}">
+                                        {{ a.prediction.predicted_disorder }} ({{ (a.prediction.confidence * 100) | round(0) | int }}%)
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Unprocessed</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if a.progress_record %}
+                                    <span class="fw-bold">{{ a.progress_record.health_score }}</span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="{{ url_for('prediction.prediction_result_view', assessment_id=a.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1">
+                                    View
+                                </a>
+                                <a href="{{ url_for('report.download_report', assessment_id=a.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1 ms-1" title="Download PDF">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                <i class="bi bi-clipboard2-x fs-1 d-block mb-2 text-muted"></i>
+                                No assessments completed yet. Click <b>"New Assessment"</b> to start your first evaluation!
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

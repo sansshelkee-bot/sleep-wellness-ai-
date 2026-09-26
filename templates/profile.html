@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile - SleepTwin AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="card card-custom p-4 p-md-5">
+                <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                    <div class="stat-icon primary">
+                        <i class="bi bi-person-gear"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold text-dark mb-0">Profile & Account Settings</h4>
+                        <p class="text-muted small mb-0">Manage your credentials and personal demographic variables.</p>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.profile') }}">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Email Address (Read-only)</label>
+                        <input type="email" class="form-control bg-light" value="{{ user.email }}" disabled>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label small fw-semibold text-muted">Full Name</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" value="{{ user.full_name }}" required>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="age" class="form-label small fw-semibold text-muted">Age (Years)</label>
+                            <input type="number" class="form-control" id="age" name="age" min="15" max="100" value="{{ user.age or 30 }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="gender" class="form-label small fw-semibold text-muted">Gender</label>
+                            <select class="form-select" id="gender" name="gender">
+                                <option value="Male" {% if user.gender == 'Male' %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if user.gender == 'Female' %}selected{% endif %}>Female</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="occupation" class="form-label small fw-semibold text-muted">Occupation</label>
+                        <select class="form-select" id="occupation" name="occupation">
+                            {% set occ = user.occupation or 'Other' %}
+                            <option value="Software Engineer" {% if occ == 'Software Engineer' %}selected{% endif %}>Software Engineer</option>
+                            <option value="Doctor" {% if occ == 'Doctor' %}selected{% endif %}>Doctor</option>
+                            <option value="Nurse" {% if occ == 'Nurse' %}selected{% endif %}>Nurse</option>
+                            <option value="Teacher" {% if occ == 'Teacher' %}selected{% endif %}>Teacher</option>
+                            <option value="Engineer" {% if occ == 'Engineer' %}selected{% endif %}>Engineer</option>
+                            <option value="Lawyer" {% if occ == 'Lawyer' %}selected{% endif %}>Lawyer</option>
+                            <option value="Accountant" {% if occ == 'Accountant' %}selected{% endif %}>Accountant</option>
+                            <option value="Salesperson" {% if occ == 'Salesperson' %}selected{% endif %}>Salesperson</option>
+                            <option value="Scientist" {% if occ == 'Scientist' %}selected{% endif %}>Scientist</option>
+                            <option value="Manager" {% if occ == 'Manager' %}selected{% endif %}>Manager</option>
+                            <option value="Other" {% if occ == 'Other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 border mb-4">
+                        <h6 class="fw-bold text-dark mb-2">Change Password</h6>
+                        <p class="text-muted small mb-2">Leave blank if you do not wish to update your password.</p>
+                        <input type="password" class="form-control" name="new_password" placeholder="Enter new password (optional)" minlength="6">
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('dashboard.dashboard_view') }}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
