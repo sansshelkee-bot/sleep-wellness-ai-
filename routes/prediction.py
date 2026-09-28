@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, session
-from models.db_models import db, SleepAssessment, Prediction, ShapExplanation, FutureRisk, Recommendation, DigitalTwin
+from models.db_models import db, SleepAssessment, Prediction, ShapExplanation, FutureRisk, Recommendation, DigitalTwin, FacialAssessment
 from services.digital_twin_service import DigitalTwinService
 from utils.helpers import login_required, get_current_user
 from ml.predict import predict_sleep_disorder
@@ -15,7 +15,19 @@ prediction_bp = Blueprint('prediction', __name__)
 def assessment_form():
     user = get_current_user()
     latest_assessment = SleepAssessment.query.filter_by(user_id=user.id).order_by(SleepAssessment.created_at.desc()).first()
-    return render_template('assessment.html', user=user, latest=latest_assessment)
+    latest_facial = FacialAssessment.query.filter_by(user_id=user.id).order_by(FacialAssessment.assessment_date.desc()).first()
+    recent_facial_assessments = FacialAssessment.query.filter_by(user_id=user.id).order_by(FacialAssessment.assessment_date.desc()).limit(10).all()
+    twin_data = DigitalTwinService.get_digital_twin_state(user.id)
+    active_tab = request.args.get('tab', 'clinical')
+    return render_template(
+        'assessment.html',
+        user=user,
+        latest=latest_assessment,
+        latest_facial=latest_facial,
+        recent_assessments=[a.to_dict() for a in recent_facial_assessments],
+        twin_data=twin_data,
+        active_tab=active_tab
+    )
 
 
 @prediction_bp.route('/api/predict', methods=['POST'])

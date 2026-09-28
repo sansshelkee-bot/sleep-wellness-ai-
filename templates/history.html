@@ -101,5 +101,78 @@
         </div>
     </div>
 
+    <!-- 2. Facial Sleepiness & Fatigue Assessments History -->
+    <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
+        <div>
+            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-3 py-1 rounded-pill mb-1">
+                <i class="bi bi-camera-video me-1"></i> Biometric Optical Telemetry
+            </span>
+            <h3 class="fw-bold text-dark mb-0">Facial Sleepiness Session Logs</h3>
+            <p class="text-muted small mb-0">Continuous history of real-time webcam assessments and observable fatigue cues.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('facial.facial_assessment_view') }}" class="btn btn-outline-info rounded-pill px-4 btn-sm shadow-sm">
+                <i class="bi bi-camera-video me-1"></i> New Facial Scan
+            </a>
+        </div>
+    </div>
+
+    <div class="card card-custom mb-5">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Date & Time</th>
+                        <th>Sleepiness Score</th>
+                        <th>Observable Level</th>
+                        <th>PERCLOS</th>
+                        <th>Blinks (Rate)</th>
+                        <th>Yawns</th>
+                        <th>Head Nodding</th>
+                        <th class="pe-4">Primary Indicators</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in facial_assessments %}
+                        <tr>
+                            <td class="ps-4">
+                                <span class="fw-semibold text-dark">{{ f.assessment_date.strftime('%Y-%m-%d %H:%M') if f.assessment_date else '-' }}</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-primary fs-6">{{ f.sleepiness_score }}</span> / 100
+                            </td>
+                            <td>
+                                <span class="badge {% if f.sleepiness_level == 'Low' %}bg-success{% elif f.sleepiness_level == 'Moderate' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                    {{ f.sleepiness_level }}
+                                </span>
+                            </td>
+                            <td><b>{{ f.perclos_percentage }}%</b></td>
+                            <td>{{ f.blink_count }} <span class="text-muted small">({{ f.blink_rate_per_min }}/m)</span></td>
+                            <td>{{ f.yawn_count }}</td>
+                            <td>
+                                {% if f.head_movement_detected %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Nodding</span>
+                                {% else %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Stable</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-4 small text-muted">
+                                {{ f.observed_indicators.replace(';', ', ') if f.observed_indicators else 'Normal alertness' }}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                <i class="bi bi-camera-video-off fs-2 d-block mb-1 text-muted"></i>
+                                No facial sleepiness assessments recorded yet. 
+                                <a href="{{ url_for('facial.facial_assessment_view') }}" class="ms-1">Take a 15-second facial assessment</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 {% endblock %}

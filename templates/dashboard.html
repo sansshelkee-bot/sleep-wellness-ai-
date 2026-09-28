@@ -25,11 +25,54 @@
             <a href="{{ url_for('simulator.simulator_view') }}" class="btn btn-outline-secondary rounded-pill px-3">
                 <i class="bi bi-sliders me-1"></i> What-If Simulator
             </a>
+            <a href="{{ url_for('prediction.assessment_form', tab='facial') }}" class="btn btn-outline-info rounded-pill px-3">
+                <i class="bi bi-camera-video me-1"></i> Facial Scan
+            </a>
             {% if latest %}
                 <a href="{{ url_for('report.download_latest_report') }}" class="btn btn-outline-danger rounded-pill px-3">
                     <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
                 </a>
             {% endif %}
+        </div>
+    </div>
+
+    <!-- Multimodal Integrated Assessment Strip -->
+    <div class="card card-custom p-3 mb-4 bg-light border shadow-sm">
+        <div class="row align-items-center g-3">
+            <div class="col-md-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary text-white p-2 rounded-circle"><i class="bi bi-person-bounding-box"></i></span>
+                    <div>
+                        <div class="small fw-semibold text-dark">Multimodal Twin State</div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle small"><i class="bi bi-broadcast me-1"></i> Synchronized</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="text-muted small">Disorder Risk:</div>
+                <span class="fw-bold {% if twin_data.twin.current_predicted_disorder == 'None' %}text-success{% elif twin_data.twin.current_predicted_disorder == 'Insomnia' %}text-warning{% else %}text-danger{% endif %}">
+                    {{ twin_data.twin.current_predicted_disorder }}
+                </span>
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="text-muted small">Facial Sleepiness:</div>
+                {% if twin_data.twin.latest_facial_score is not none %}
+                    <span class="badge {% if twin_data.twin.latest_facial_level == 'Low' %}bg-success{% elif twin_data.twin.latest_facial_level == 'Moderate' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                        {{ twin_data.twin.latest_facial_level }} ({{ twin_data.twin.latest_facial_score | int }}/100)
+                    </span>
+                {% else %}
+                    <span class="badge bg-secondary">Unassessed</span>
+                {% endif %}
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="text-muted small">Sleep Duration:</div>
+                <span class="fw-bold text-dark">{{ twin_data.twin.current_sleep_duration }} hrs</span>
+            </div>
+            <div class="col-6 col-md-3 text-md-end">
+                <a href="{{ url_for('facial.facial_assessment_view') }}" class="btn btn-sm btn-outline-info rounded-pill px-3">
+                    <i class="bi bi-camera-video me-1"></i> Launch Facial Scan
+                </a>
+            </div>
         </div>
     </div>
 

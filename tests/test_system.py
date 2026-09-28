@@ -263,5 +263,107 @@ class SleepWellnessSystemTestCase(unittest.TestCase):
         self.assertGreater(len(pdf_bytes), 1000)
         print(f" [PASS] 10. PDF Report Generation Verified: Valid %PDF Binary ({len(pdf_bytes):,} bytes)")
 
+    def test_11_facial_sleepiness_scoring_engine(self):
+        """Test computer vision EAR, MAR, PERCLOS, and explainable sleepiness scoring."""
+        from ml.facial_analyzer import calculate_ear, calculate_mar, compute_facial_sleepiness_score
+
+        # 1. EAR testing
+        open_eye = [(0, 0), (2, 5), (6, 5), (8, 0), (6, -5), (2, -5)]
+        closed_eye = [(0, 0), (2, 0.5), (6, 0.5), (8, 0), (6, -0.5), (2, -0.5)]
+        ear_open = calculate_ear(open_eye)
+        ear_closed = calculate_ear(closed_eye)
+        self.assertGreater(ear_open, 0.25)
+        self.assertLess(ear_closed, 0.20)
+
+        # 2. MAR testing
+        neutral_mouth = [(0, 0), (2, 1), (4, 1.5), (6, 1), (8, 0), (6, -1), (4, -1.5), (2, -1)]
+        yawn_mouth = [(0, 0), (2, 5), (4, 7), (6, 5), (8, 0), (6, -5), (4, -7), (2, -5)]
+        mar_neutral = calculate_mar(neutral_mouth)
+        mar_yawn = calculate_mar(yawn_mouth)
+        self.assertLess(mar_neutral, 0.50)
+        self.assertGreaterEqual(mar_yawn, 0.60)
+
+        # 3. High Sleepiness Telemetry Scenario
+        drowsy_telemetry = {
+            'duration_seconds': 15.0,
+            'total_frames': 450,
+            'closed_frames': 90,  # 20% PERCLOS
+            'blink_count': 8,
+            'prolonged_closure_count': 2,
+            'yawn_count': 2,
+            'head_nod_count': 1,
+            'avg_ear': 0.19,
+            'max_mar': 0.68
+        }
+        res_drowsy = compute_facial_sleepiness_score(drowsy_telemetry)
+        self.assertEqual(res_drowsy['sleepiness_level'], 'High')
+        self.assertGreaterEqual(res_drowsy['sleepiness_score'], 61.0)
+        self.assertIn('Facial assessment provides an estimate', res_drowsy['disclaimer'])
+        self.assertGreaterEqual(len(res_drowsy['contributing_factors']), 3)
+
+        # 4. Low Sleepiness Telemetry Scenario (Alert)
+        alert_telemetry = {
+            'duration_seconds': 15.0,
+            'total_frames': 450,
+            'closed_frames': 10,  # 2.2% PERCLOS
+            'blink_count': 4,
+            'prolonged_closure_count': 0,
+            'yawn_count': 0,
+            'head_nod_count': 0,
+            'avg_ear': 0.29,
+            'max_mar': 0.32
+        }
+        res_alert = compute_facial_sleepiness_score(alert_telemetry)
+        self.assertEqual(res_alert['sleepiness_level'], 'Low')
+        self.assertLessEqual(res_alert['sleepiness_score'], 30.0)
+        print(f" [PASS] 11. Facial Scoring Engine Verified: Drowsy={res_drowsy['sleepiness_score']}/100 (High), Alert={res_alert['sleepiness_score']}/100 (Low)")
+
+    def test_12_facial_assessment_api_and_twin_sync(self):
+        """Test API submission endpoint, database persistence, and Digital Twin synchronization."""
+        from models.db_models import FacialAssessment
+
+        # Login as demo user
+        self.client.post('/login', data={'email': 'demo@sleepwellness.ai', 'password': 'password123'})
+        demo_user = User.query.filter_by(email='demo@sleepwellness.ai').first()
+
+        # Submit assessment telemetry via POST
+        payload = {
+            'duration_seconds': 15.0,
+            'total_frames': 450,
+            'closed_frames': 75, # 16.7% PERCLOS
+            'blink_count': 7,
+            'prolonged_closure_count': 1,
+            'yawn_count': 1,
+            'head_nod_count': 1,
+            'avg_ear': 0.21,
+            'max_mar': 0.62
+        }
+        resp = self.client.post('/api/facial-assessment/submit', json=payload)
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(data['status'], 'success')
+        self.assertIn('assessment_id', data)
+        self.assertEqual(data['result']['sleepiness_level'], 'High')
+
+        # Verify database record
+        saved_rec = db.session.get(FacialAssessment, data['assessment_id'])
+        self.assertIsNotNone(saved_rec)
+        self.assertEqual(saved_rec.user_id, demo_user.id)
+        self.assertEqual(saved_rec.sleepiness_level, 'High')
+
+        # Verify Digital Twin synchronization
+        db.session.refresh(demo_user.digital_twin)
+        self.assertEqual(demo_user.digital_twin.latest_facial_score, saved_rec.sleepiness_score)
+        self.assertEqual(demo_user.digital_twin.latest_facial_level, 'High')
+
+        # Verify History API
+        hist_resp = self.client.get('/api/facial-assessment/history')
+        self.assertEqual(hist_resp.status_code, 200)
+        hist_data = hist_resp.get_json()
+        self.assertIn('scores', hist_data)
+        self.assertGreaterEqual(len(hist_data['scores']), 1)
+        print(f" [PASS] 12. Facial Assessment API & Digital Twin Sync Verified (Latest Score: {saved_rec.sleepiness_score}/100)")
+
 if __name__ == '__main__':
     unittest.main()
+

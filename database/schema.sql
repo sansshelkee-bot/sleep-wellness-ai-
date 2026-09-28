@@ -79,6 +79,9 @@ CREATE TABLE IF NOT EXISTS digital_twins (
     current_future_risk VARCHAR(20) DEFAULT 'Unassessed',
     total_assessments INT DEFAULT 0,
     baseline_health_score FLOAT DEFAULT 0.0,
+    latest_facial_score FLOAT DEFAULT NULL,
+    latest_facial_level VARCHAR(20) DEFAULT NULL,
+    last_facial_assessment_date DATETIME DEFAULT NULL,
     last_assessment_date DATETIME,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_digital_twin_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -149,4 +152,28 @@ CREATE TABLE IF NOT EXISTS progress_records (
     CONSTRAINT fk_progress_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_progress_assessment FOREIGN KEY (assessment_id) REFERENCES sleep_assessments(id) ON DELETE CASCADE,
     INDEX idx_progress_user_date (user_id, record_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 9. Facial Sleepiness Assessments Table
+CREATE TABLE IF NOT EXISTS facial_assessments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    assessment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    sleepiness_score FLOAT NOT NULL,
+    sleepiness_level VARCHAR(20) NOT NULL,
+    blink_count INT DEFAULT 0,
+    blink_rate_per_min FLOAT DEFAULT 0.0,
+    avg_ear FLOAT DEFAULT 0.0,
+    perclos_percentage FLOAT DEFAULT 0.0,
+    yawn_count INT DEFAULT 0,
+    max_mar FLOAT DEFAULT 0.0,
+    head_nod_count INT DEFAULT 0,
+    head_movement_detected BOOLEAN DEFAULT FALSE,
+    duration_seconds FLOAT DEFAULT 15.0,
+    observed_indicators TEXT,
+    contributing_factors TEXT,
+    recommendation TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_facial_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_facial_user_date (user_id, assessment_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

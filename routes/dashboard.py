@@ -1,6 +1,6 @@
 import json
 from flask import Blueprint, render_template, jsonify, session
-from models.db_models import SleepAssessment, Prediction, DigitalTwin, ProgressRecord
+from models.db_models import SleepAssessment, Prediction, DigitalTwin, ProgressRecord, FacialAssessment
 from services.digital_twin_service import DigitalTwinService
 from utils.helpers import login_required, get_current_user
 from config import Config
@@ -13,6 +13,7 @@ def dashboard_view():
     user = get_current_user()
     twin_data = DigitalTwinService.get_digital_twin_state(user.id)
     latest_assessment = SleepAssessment.query.filter_by(user_id=user.id).order_by(SleepAssessment.created_at.desc()).first()
+    latest_facial = FacialAssessment.query.filter_by(user_id=user.id).order_by(FacialAssessment.assessment_date.desc()).first()
     
     total_assessments = SleepAssessment.query.filter_by(user_id=user.id).count()
     all_assessments = SleepAssessment.query.filter_by(user_id=user.id).order_by(SleepAssessment.created_at.desc()).limit(10).all()
@@ -22,6 +23,7 @@ def dashboard_view():
         user=user,
         twin_data=twin_data,
         latest=latest_assessment,
+        latest_facial=latest_facial,
         total_assessments=total_assessments,
         recent_assessments=all_assessments
     )
@@ -32,7 +34,8 @@ def dashboard_view():
 def history_view():
     user = get_current_user()
     assessments = SleepAssessment.query.filter_by(user_id=user.id).order_by(SleepAssessment.created_at.desc()).all()
-    return render_template('history.html', user=user, assessments=assessments)
+    facial_assessments = FacialAssessment.query.filter_by(user_id=user.id).order_by(FacialAssessment.assessment_date.desc()).all()
+    return render_template('history.html', user=user, assessments=assessments, facial_assessments=facial_assessments)
 
 
 @dashboard_bp.route('/model-info')

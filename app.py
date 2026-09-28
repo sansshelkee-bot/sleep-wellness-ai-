@@ -4,7 +4,8 @@ from config import Config
 from models.db_models import db, User
 from routes import (
     auth_bp, dashboard_bp, prediction_bp,
-    digital_twin_bp, simulator_bp, report_bp
+    digital_twin_bp, simulator_bp, report_bp,
+    facial_bp
 )
 
 def create_app():
@@ -16,6 +17,21 @@ def create_app():
         db.init_app(app)
         with app.app_context():
             db.create_all()
+            try:
+                from sqlalchemy import inspect, text
+                inspector = inspect(db.engine)
+                if 'digital_twins' in inspector.get_table_names():
+                    cols = [c['name'] for c in inspector.get_columns('digital_twins')]
+                    with db.engine.connect() as conn:
+                        if 'latest_facial_score' not in cols:
+                            conn.execute(text("ALTER TABLE digital_twins ADD COLUMN latest_facial_score FLOAT NULL"))
+                        if 'latest_facial_level' not in cols:
+                            conn.execute(text("ALTER TABLE digital_twins ADD COLUMN latest_facial_level VARCHAR(20) NULL"))
+                        if 'last_facial_assessment_date' not in cols:
+                            conn.execute(text("ALTER TABLE digital_twins ADD COLUMN last_facial_assessment_date DATETIME NULL"))
+                        conn.commit()
+            except Exception:
+                pass
     except Exception as e:
         print(f"[Database Warning] Could not connect to MySQL: {e}")
         # Fallback to local SQLite if MySQL is unavailable
@@ -33,6 +49,7 @@ def create_app():
     app.register_blueprint(digital_twin_bp)
     app.register_blueprint(simulator_bp)
     app.register_blueprint(report_bp)
+    app.register_blueprint(facial_bp)
 
     # Landing page route
     @app.route('/')

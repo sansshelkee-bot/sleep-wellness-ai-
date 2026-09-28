@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 from models.db_models import (
     db, User, SleepAssessment, Prediction, DigitalTwin,
-    Recommendation, ShapExplanation, FutureRisk, ProgressRecord
+    Recommendation, ShapExplanation, FutureRisk, ProgressRecord,
+    FacialAssessment
 )
 from ml.predict import predict_sleep_disorder
 from ml.explain import explain_prediction
@@ -225,11 +226,15 @@ class DigitalTwinService:
         # Recent 5 progress records
         recent_records = ProgressRecord.query.filter_by(user_id=user_id).order_by(ProgressRecord.record_date.desc()).limit(5).all()
 
+        # Recent 5 facial sleepiness assessments
+        recent_facial = FacialAssessment.query.filter_by(user_id=user_id).order_by(FacialAssessment.assessment_date.desc()).limit(5).all()
+
         return {
             'twin': twin.to_dict(),
             'user': user.to_dict(),
             'delta_score': delta_score,
-            'recent_history': [r.to_dict() for r in recent_records]
+            'recent_history': [r.to_dict() for r in recent_records],
+            'recent_facial': [f.to_dict() for f in recent_facial]
         }
 
     @staticmethod
@@ -265,3 +270,90 @@ class DigitalTwinService:
             'steps': steps,
             'disorders': disorders
         }
+
+    @staticmethod
+    def record_facial_assessment(user_id, facial_data):
+        """
+        Stores an objective facial sleepiness assessment session and updates
+        the user's Digital Twin state with the latest biometric fatigue reading.
+        """
+        import json
+        user = db.session.get(User, user_id)
+        if not user:
+            raise ValueError(f"User with ID {user_id} does not exist.")
+
+        # Ensure Digital Twin entity exists
+        twin = DigitalTwin.query.filter_by(user_id=user_id).first()
+        if not twin:
+            twin = DigitalTwin(user_id=user_id, baseline_health_score=0.0, total_assessments=0)
+            db.session.add(twin)
+
+        # Handle observed indicators and factors encoding
+        indicators = facial_data.get('observed_indicators', [])
+        ind_str = ';'.join(indicators) if isinstance(indicators, list) else str(indicators)
+        
+        factors = facial_data.get('contributing_factors', [])
+        factors_str = json.dumps(factors) if isinstance(factors, list) else str(factors)
+
+        # Create FacialAssessment entity
+        assessment = FacialAssessment(
+            user_id=user_id,
+            assessment_date=datetime.now(timezone.utc),
+            sleepiness_score=float(facial_data.get('sleepiness_score', 0.0)),
+            sleepiness_level=str(facial_data.get('sleepiness_level', 'Low')),
+            blink_count=int(facial_data.get('blink_count', 0)),
+            blink_rate_per_min=float(facial_data.get('blink_rate_per_min', 0.0)),
+            avg_ear=float(facial_data.get('avg_ear', 0.0)),
+            perclos_percentage=float(facial_data.get('perclos_percentage', 0.0)),
+            yawn_count=int(facial_data.get('yawn_count', 0)),
+            max_mar=float(facial_data.get('max_mar', 0.0)),
+            head_nod_count=int(facial_data.get('head_nod_count', 0)),
+            head_movement_detected=bool(facial_data.get('head_movement_detected', False)),
+            duration_seconds=float(facial_data.get('duration_seconds', 15.0)),
+            observed_indicators=ind_str,
+            contributing_factors=factors_str,
+            recommendation=str(facial_data.get('recommendation', '')),
+            created_at=datetime.now(timezone.utc)
+        )
+        db.session.add(assessment)
+
+        # Update Digital Twin latest facial telemetry
+        twin.latest_facial_score = assessment.sleepiness_score
+        twin.latest_facial_level = assessment.sleepiness_level
+        twin.last_facial_assessment_date = assessment.assessment_date
+        twin.updated_at = datetime.now(timezone.utc)
+
+        db.session.commit()
+        return assessment
+
+    @staticmethod
+    def get_facial_progress_data(user_id):
+        """
+        Returns chronological data for Facial Sleepiness Chart.js visualization.
+        """
+        records = FacialAssessment.query.filter_by(user_id=user_id).order_by(FacialAssessment.assessment_date.asc()).all()
+        labels = []
+        scores = []
+        levels = []
+        perclos_list = []
+        blink_rates = []
+        yawns = []
+
+        for r in records:
+            d_str = r.assessment_date.strftime('%b %d, %H:%M') if r.assessment_date else ''
+            labels.append(d_str)
+            scores.append(round(r.sleepiness_score, 1))
+            levels.append(r.sleepiness_level)
+            perclos_list.append(round(r.perclos_percentage, 1))
+            blink_rates.append(round(r.blink_rate_per_min, 1))
+            yawns.append(r.yawn_count)
+
+        return {
+            'labels': labels,
+            'scores': scores,
+            'levels': levels,
+            'perclos': perclos_list,
+            'blink_rates': blink_rates,
+            'yawns': yawns
+        }
+

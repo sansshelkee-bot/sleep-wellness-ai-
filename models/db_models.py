@@ -26,6 +26,7 @@ class User(db.Model):
     predictions = db.relationship('Prediction', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     recommendations = db.relationship('Recommendation', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     progress_records = db.relationship('ProgressRecord', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    facial_assessments = db.relationship('FacialAssessment', backref='user', lazy='dynamic', cascade='all, delete-orphan')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -144,6 +145,9 @@ class DigitalTwin(db.Model):
     current_future_risk = db.Column(db.String(20), default='Unassessed')
     total_assessments = db.Column(db.Integer, default=0)
     baseline_health_score = db.Column(db.Float, default=0.0)
+    latest_facial_score = db.Column(db.Float, nullable=True)
+    latest_facial_level = db.Column(db.String(20), nullable=True)
+    last_facial_assessment_date = db.Column(db.DateTime, nullable=True)
     last_assessment_date = db.Column(db.DateTime, nullable=True)
     updated_at = db.Column(db.DateTime, default=current_time, onupdate=current_time)
 
@@ -165,6 +169,9 @@ class DigitalTwin(db.Model):
             'current_future_risk': self.current_future_risk or 'Unassessed',
             'total_assessments': self.total_assessments or 0,
             'baseline_health_score': round(self.baseline_health_score, 1) if self.baseline_health_score else 0.0,
+            'latest_facial_score': round(self.latest_facial_score, 1) if self.latest_facial_score is not None else None,
+            'latest_facial_level': self.latest_facial_level or 'Unassessed',
+            'last_facial_assessment_date': self.last_facial_assessment_date.strftime('%Y-%m-%d %H:%M') if self.last_facial_assessment_date else None,
             'last_assessment_date': self.last_assessment_date.strftime('%Y-%m-%d %H:%M') if self.last_assessment_date else None,
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M') if self.updated_at else None
         }
@@ -267,3 +274,60 @@ class ProgressRecord(db.Model):
             'predicted_disorder': self.predicted_disorder,
             'risk_level': self.risk_level
         }
+
+
+class FacialAssessment(db.Model):
+    __tablename__ = 'facial_assessments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    assessment_date = db.Column(db.DateTime, default=current_time, index=True)
+    sleepiness_score = db.Column(db.Float, nullable=False)   # 0 to 100
+    sleepiness_level = db.Column(db.String(20), nullable=False) # 'Low', 'Moderate', 'High'
+    
+    # Quantitative Biometric Telemetry
+    blink_count = db.Column(db.Integer, default=0)
+    blink_rate_per_min = db.Column(db.Float, default=0.0)
+    avg_ear = db.Column(db.Float, default=0.0)
+    perclos_percentage = db.Column(db.Float, default=0.0)
+    yawn_count = db.Column(db.Integer, default=0)
+    max_mar = db.Column(db.Float, default=0.0)
+    head_nod_count = db.Column(db.Integer, default=0)
+    head_movement_detected = db.Column(db.Boolean, default=False)
+    duration_seconds = db.Column(db.Float, default=15.0)
+
+    # Explainability & Recommendations
+    observed_indicators = db.Column(db.Text, nullable=True)   # Semicolon-delimited list of detected indicators
+    contributing_factors = db.Column(db.Text, nullable=True)  # JSON string of factor contributions
+    recommendation = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=current_time)
+
+    def to_dict(self):
+        import json
+        factors = []
+        if self.contributing_factors:
+            try:
+                factors = json.loads(self.contributing_factors)
+            except Exception:
+                factors = []
+
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'date': self.assessment_date.strftime('%Y-%m-%d %H:%M') if self.assessment_date else '',
+            'sleepiness_score': round(self.sleepiness_score, 1),
+            'sleepiness_level': self.sleepiness_level,
+            'blink_count': self.blink_count,
+            'blink_rate_per_min': round(self.blink_rate_per_min, 1),
+            'avg_ear': round(self.avg_ear, 3),
+            'perclos_percentage': round(self.perclos_percentage, 1),
+            'yawn_count': self.yawn_count,
+            'max_mar': round(self.max_mar, 3),
+            'head_nod_count': self.head_nod_count,
+            'head_movement_detected': self.head_movement_detected,
+            'duration_seconds': round(self.duration_seconds, 1),
+            'observed_indicators': [ind.strip() for ind in self.observed_indicators.split(';') if ind.strip()] if self.observed_indicators else [],
+            'contributing_factors': factors,
+            'recommendation': self.recommendation
+        }
+
