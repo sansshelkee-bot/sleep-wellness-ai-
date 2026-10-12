@@ -364,6 +364,47 @@ class SleepWellnessSystemTestCase(unittest.TestCase):
         self.assertGreaterEqual(len(hist_data['scores']), 1)
         print(f" [PASS] 12. Facial Assessment API & Digital Twin Sync Verified (Latest Score: {saved_rec.sleepiness_score}/100)")
 
+    def test_13_doctor_consultation_workflow(self):
+        """Test Doctor Consultation portal, booking API, Digital Twin snapshotting, and cancellation."""
+        from models.db_models import DoctorConsultation
+
+        # Login as demo user
+        self.client.post('/login', data={'email': 'demo@sleepwellness.ai', 'password': 'password123'})
+        demo_user = User.query.filter_by(email='demo@sleepwellness.ai').first()
+
+        # View portal
+        view_resp = self.client.get('/consultation')
+        self.assertEqual(view_resp.status_code, 200)
+
+        # Book consultation via POST
+        booking_payload = {
+            'doctor_name': 'Dr. Marcus Vance, MD, DABSM',
+            'specialty': 'Sleep Apnea & Airway Diagnostics',
+            'hospital_clinic': 'Sleep Wellness Institute',
+            'consultation_type': 'Virtual Video Teleconsultation',
+            'time_slot': 'Tomorrow at 10:00 AM',
+            'patient_notes': 'Experiencing chronic loud snoring and daytime fatigue.'
+        }
+        book_resp = self.client.post('/api/consultation/book', json=booking_payload)
+        self.assertEqual(book_resp.status_code, 200)
+        book_data = book_resp.get_json()
+        self.assertEqual(book_data['status'], 'success')
+        self.assertIn('consultation', book_data)
+
+        consultation_id = book_data['consultation']['id']
+        saved_consultation = db.session.get(DoctorConsultation, consultation_id)
+        self.assertIsNotNone(saved_consultation)
+        self.assertEqual(saved_consultation.user_id, demo_user.id)
+        self.assertEqual(saved_consultation.status, 'Confirmed')
+        self.assertTrue(saved_consultation.meeting_link.startswith('https://meet.sleepwellness.ai/room-sw-'))
+
+        # Cancel consultation
+        cancel_resp = self.client.post(f'/api/consultation/cancel/{consultation_id}')
+        self.assertEqual(cancel_resp.status_code, 200)
+        db.session.refresh(saved_consultation)
+        self.assertEqual(saved_consultation.status, 'Cancelled')
+        print(f" [PASS] 13. Doctor Consultation Telehealth Workflow Verified (ID: #{consultation_id}, Status: {saved_consultation.status})")
+
 if __name__ == '__main__':
     unittest.main()
 

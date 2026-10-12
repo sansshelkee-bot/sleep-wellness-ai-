@@ -5,7 +5,7 @@ from models.db_models import db, User
 from routes import (
     auth_bp, dashboard_bp, prediction_bp,
     digital_twin_bp, simulator_bp, report_bp,
-    facial_bp
+    facial_bp, consultation_bp
 )
 
 def create_app():
@@ -50,6 +50,7 @@ def create_app():
     app.register_blueprint(simulator_bp)
     app.register_blueprint(report_bp)
     app.register_blueprint(facial_bp)
+    app.register_blueprint(consultation_bp)
 
     # Landing page route
     @app.route('/')

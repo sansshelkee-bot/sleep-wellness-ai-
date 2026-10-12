@@ -60,6 +60,11 @@
                                 <i class="bi bi-clock-history me-1"></i> History
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link px-3 fw-medium text-success-emphasis fw-semibold" href="{{ url_for('consultation.consultation_view') }}">
+                                <i class="bi bi-hospital me-1"></i> Doctor Consultation
+                            </a>
+                        </li>
                     {% endif %}
                     <li class="nav-item">
                         <a class="nav-link px-3 fw-medium text-muted" href="{{ url_for('dashboard.model_info_view') }}">

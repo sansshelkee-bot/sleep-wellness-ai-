@@ -14,7 +14,9 @@
             </div>
             <h2 class="fw-bold text-dark mb-0">AI Prediction & Sleep Diagnostics</h2>
         </div>
-        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('consultation.consultation_view') }}" class="btn btn-outline-success rounded-pill px-3 shadow-sm">
+                <i class="bi bi-hospital me-1"></i> Doctor Consultation
+            </a>
             <a href="{{ url_for('report.download_report', assessment_id=assessment.id) }}" class="btn btn-outline-danger rounded-pill px-3 shadow-sm">
                 <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF Report
             </a>
@@ -90,6 +92,18 @@
                         </div>
                     </div>
                 </div>
+
+                {% if prediction.predicted_disorder != 'None' %}
+                    <div class="mt-3 p-3 bg-light rounded-3 border d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2">
+                        <div>
+                            <div class="small fw-semibold text-dark"><i class="bi bi-hospital text-danger me-1"></i> Recommended Clinical Next Step:</div>
+                            <div class="text-muted small">Elevated <b>{{ prediction.predicted_disorder }}</b> risk detected. Schedule a teleconsultation with a board-certified sleep specialist.</div>
+                        </div>
+                        <a href="{{ url_for('consultation.consultation_view') }}" class="btn btn-sm btn-primary rounded-pill px-3 text-nowrap">
+                            Consult Doctor <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                {% endif %}
             </div>
         </div>
 

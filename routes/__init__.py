@@ -5,3 +5,4 @@ from .digital_twin import digital_twin_bp
 from .simulator import simulator_bp
 from .report import report_bp
 from .facial_assessment import facial_bp
+from .consultation import consultation_bp

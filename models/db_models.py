@@ -27,6 +27,7 @@ class User(db.Model):
     recommendations = db.relationship('Recommendation', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     progress_records = db.relationship('ProgressRecord', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     facial_assessments = db.relationship('FacialAssessment', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    consultations = db.relationship('DoctorConsultation', backref='user', lazy='dynamic', cascade='all, delete-orphan')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -329,5 +330,48 @@ class FacialAssessment(db.Model):
             'observed_indicators': [ind.strip() for ind in self.observed_indicators.split(';') if ind.strip()] if self.observed_indicators else [],
             'contributing_factors': factors,
             'recommendation': self.recommendation
+        }
+
+
+class DoctorConsultation(db.Model):
+    __tablename__ = 'doctor_consultations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    doctor_name = db.Column(db.String(100), nullable=False)
+    specialty = db.Column(db.String(100), nullable=False)
+    hospital_clinic = db.Column(db.String(150), nullable=False)
+    consultation_type = db.Column(db.String(50), default='Virtual Video Teleconsultation')
+    appointment_date = db.Column(db.DateTime, nullable=False)
+    time_slot = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.String(30), default='Confirmed')  # 'Confirmed', 'Completed', 'Cancelled'
+    patient_notes = db.Column(db.Text, nullable=True)
+    digital_twin_snapshot = db.Column(db.Text, nullable=True)  # JSON summary of twin at booking
+    meeting_link = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=current_time)
+
+    def to_dict(self):
+        import json
+        snapshot = {}
+        if self.digital_twin_snapshot:
+            try:
+                snapshot = json.loads(self.digital_twin_snapshot)
+            except Exception:
+                snapshot = {}
+
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'doctor_name': self.doctor_name,
+            'specialty': self.specialty,
+            'hospital_clinic': self.hospital_clinic,
+            'consultation_type': self.consultation_type,
+            'appointment_date': self.appointment_date.strftime('%Y-%m-%d') if self.appointment_date else '',
+            'time_slot': self.time_slot,
+            'status': self.status,
+            'patient_notes': self.patient_notes or '',
+            'digital_twin_snapshot': snapshot,
+            'meeting_link': self.meeting_link or '',
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M') if self.created_at else ''
         }
 

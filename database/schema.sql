@@ -177,3 +177,22 @@ CREATE TABLE IF NOT EXISTS facial_assessments (
     CONSTRAINT fk_facial_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_facial_user_date (user_id, assessment_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. Doctor Consultations Table
+CREATE TABLE IF NOT EXISTS doctor_consultations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    doctor_name VARCHAR(100) NOT NULL,
+    specialty VARCHAR(100) NOT NULL,
+    hospital_clinic VARCHAR(150) NOT NULL,
+    consultation_type VARCHAR(50) DEFAULT 'Virtual Video Teleconsultation',
+    appointment_date DATETIME NOT NULL,
+    time_slot VARCHAR(50) NOT NULL,
+    status VARCHAR(30) DEFAULT 'Confirmed',
+    patient_notes TEXT,
+    digital_twin_snapshot TEXT,
+    meeting_link VARCHAR(255),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_consultation_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_consultation_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Consultation - SleepTwin AI{% endblock %}
+
+{% block extra_head %}
+<style>
+    .specialist-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-radius: 14px;
+    }
+    .specialist-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+    .avatar-circle {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.25rem;
+    }
+    .meeting-pulse {
+        animation: pulse-ring 2s infinite;
+    }
+    @keyframes pulse-ring {
+        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Header & Action Bar -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill small">
+                    <i class="bi bi-hospital me-1"></i> Telehealth & Specialist Network
+                </span>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill small">
+                    <i class="bi bi-shield-check me-1"></i> HIPAA Compliant Handoff
+                </span>
+            </div>
+            <h2 class="fw-bold text-dark mb-1">Sleep Medicine Doctor Consultation</h2>
+            <p class="text-muted small mb-0">
+                Connect directly with board-certified somnologists, pulmonologists, and behavioral sleep physicians. Share your Digital Twin clinical dossier in one click.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('prediction.assessment_form') }}" class="btn btn-outline-primary rounded-pill px-3">
+                <i class="bi bi-clipboard2-pulse me-1"></i> Health Assessment
+            </a>
+            <a href="{{ url_for('digital_twin.digital_twin_view') }}" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-person-bounding-box me-1"></i> View Digital Twin
+            </a>
+        </div>
+    </div>
+
+    <!-- Section 1: Active / Upcoming Bookings (If any) -->
+    {% if consultations %}
+        <div class="mb-4">
+            <h5 class="fw-bold text-dark mb-3">
+                <i class="bi bi-calendar-check text-primary me-2"></i> Your Scheduled Consultations ({{ consultations | length }})
+            </h5>
+            <div class="row g-3">
+                {% for c in consultations %}
+                    <div class="col-lg-6">
+                        <div class="card card-custom p-3 border-{% if c.status == 'Confirmed' %}primary{% else %}secondary{% endif %} shadow-sm">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="badge {% if c.status == 'Confirmed' %}bg-success{% elif c.status == 'Completed' %}bg-primary{% else %}bg-secondary{% endif %} mb-1">
+                                        {{ c.status }}
+                                    </span>
+                                    <h5 class="fw-bold text-dark mb-0">{{ c.doctor_name }}</h5>
+                                    <div class="text-muted small">{{ c.specialty }} &bull; {{ c.hospital_clinic }}</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="badge bg-light text-dark border">{{ c.time_slot }}</div>
+                                    <div class="text-muted small mt-1">Booked: {{ c.created_at }}</div>
+                                </div>
+                            </div>
+
+                            <div class="p-2 bg-light rounded-3 border mb-3 small">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted">Format:</span>
+                                    <span class="fw-semibold text-dark"><i class="bi bi-camera-video me-1"></i> {{ c.consultation_type }}</span>
+                                </div>
+                                {% if c.digital_twin_snapshot %}
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-muted">Attached Digital Twin:</span>
+                                        <span class="fw-semibold text-primary">
+                                            {{ c.digital_twin_snapshot.predicted_disorder }} ({{ (c.digital_twin_snapshot.confidence * 100) | round(0) | int }}% conf) | Health Score: {{ c.digital_twin_snapshot.health_score }}
+                                        </span>
+                                    </div>
+                                {% endif %}
+                                {% if c.patient_notes %}
+                                    <div class="mt-1 pt-1 border-top text-muted">
+                                        <em>"{{ c.patient_notes }}"</em>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                {% if c.status == 'Confirmed' %}
+                                    <a href="{{ c.meeting_link }}" target="_blank" class="btn btn-success btn-sm rounded-pill px-3 meeting-pulse">
+                                        <i class="bi bi-camera-video-fill me-1"></i> Join Secure Video Room
+                                    </a>
+                                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="cancelAppointment({{ c.id }})">
+                                        Cancel Appointment
+                                    </button>
+                                {% else %}
+                                    <span class="text-muted small">Appointment has ended or was cancelled</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Section 2: AI Matched Specialist Recommendation -->
+    {% if recommended_specialist and twin_data and twin_data.twin.current_predicted_disorder != 'Pending Assessment' %}
+        <div class="card card-custom p-4 mb-4 border-primary bg-primary-subtle shadow-sm">
+            <div class="row align-items-center g-3">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="badge bg-primary text-white"><i class="bi bi-stars me-1"></i> Intelligent Clinical Match</span>
+                        <span class="text-dark small fw-semibold">Matched to your Digital Twin</span>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-1">
+                        Recommended Specialist: {{ recommended_specialist.name }}
+                    </h4>
+                    <p class="text-muted small mb-0">
+                        Based on your current Digital Twin state (<b>{{ twin_data.twin.current_predicted_disorder }}</b> with <b>{{ twin_data.twin.current_confidence }}%</b> confidence), we matched you with a verified specialist in airway and sleep disorder management.
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <button class="btn btn-primary rounded-pill px-4 shadow-sm" onclick="openBookingModal('{{ recommended_specialist.name }}', '{{ recommended_specialist.specialty }}', '{{ recommended_specialist.hospital }}')">
+                        <i class="bi bi-calendar-plus me-1"></i> Book With {{ recommended_specialist.name.split(',')[0] }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Section 3: Verified Sleep Medicine Specialists Directory -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h4 class="fw-bold text-dark mb-0">Verified Sleep Specialists</h4>
+                <p class="text-muted small mb-0">Board-certified medical doctors available for virtual teleconsultation or clinic review.</p>
+            </div>
+            <span class="badge bg-light text-muted border px-3 py-2">
+                4 Doctors Available Today
+            </span>
+        </div>
+
+        <div class="row g-4">
+            {% for s in specialists %}
+                <div class="col-md-6 col-lg-6">
+                    <div class="card card-custom specialist-card p-4 h-100 shadow-sm border">
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <div class="avatar-circle bg-{{ s.color }}-subtle text-{{ s.color }}">
+                                {{ s.avatar_initials }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5 class="fw-bold text-dark mb-0">{{ s.name }}</h5>
+                                    <span class="badge bg-warning-subtle text-dark border border-warning-subtle small">
+                                        <i class="bi bi-star-fill text-warning me-1"></i> {{ s.rating }} ({{ s.reviews_count }})
+                                    </span>
+                                </div>
+                                <div class="text-primary small fw-semibold">{{ s.title }}</div>
+                                <div class="text-muted small"><i class="bi bi-geo-alt me-1"></i> {{ s.hospital }}</div>
+                            </div>
+                        </div>
+
+                        <p class="text-muted small mb-3">
+                            {{ s.bio }}
+                        </p>
+
+                        <div class="p-2 bg-light rounded-3 border mb-3 small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">Clinical Focus:</span>
+                                <span class="badge bg-secondary-subtle text-dark">{{ s.specialty }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">Experience:</span>
+                                <span class="fw-semibold text-dark">{{ s.experience }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Consultation Fee:</span>
+                                <span class="fw-bold text-success">{{ s.consultation_fee }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="small fw-semibold text-muted mb-1">Available Slots:</div>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for slot in s.available_slots %}
+                                    <span class="badge bg-light text-dark border">{{ slot }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mt-auto pt-2 border-top">
+                            <button class="btn btn-outline-primary rounded-pill w-100 fw-semibold" onclick="openBookingModal('{{ s.name }}', '{{ s.specialty }}', '{{ s.hospital }}')">
+                                <i class="bi bi-calendar-check me-1"></i> Book Virtual Consultation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Clinical Disclaimer -->
+    <div class="alert alert-light border p-3 rounded-3 text-muted small mt-4">
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <i class="bi bi-info-circle text-primary"></i>
+            <strong class="text-dark">Telehealth Integration & Medical Disclaimer</strong>
+        </div>
+        Consultations are conducted by licensed, independent medical practitioners. SleepTwin AI serves as a Clinical Decision Support System (CDSS) providing Explainable AI (SHAP) summaries and biometric telemetry. In life-threatening emergencies, immediately call your local emergency service.
+    </div>
+
+</div>
+
+<!-- Booking Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content card-custom border-0 shadow">
+            <div class="modal-header border-bottom pb-3">
+                <div>
+                    <span class="badge bg-primary text-white mb-1"><i class="bi bi-hospital me-1"></i> Virtual Appointment</span>
+                    <h5 class="modal-title fw-bold text-dark" id="bookingModalLabel">Schedule Doctor Consultation</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form id="bookingForm">
+                <div class="modal-body p-4">
+                    
+                    <!-- Doctor Summary Box -->
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small">Selected Physician:</span>
+                                <h5 id="modalDoctorName" class="fw-bold text-dark mb-0">Dr. Marcus Vance, MD</h5>
+                                <div id="modalDoctorSpecialty" class="text-primary small">Sleep Apnea & Airway Diagnostics</div>
+                                <div id="modalDoctorHospital" class="text-muted small">Sleep Wellness Institute</div>
+                            </div>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+                                <i class="bi bi-camera-video me-1"></i> HD Telehealth
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Digital Twin Dossier Auto-Handoff Preview -->
+                    <div class="p-3 bg-primary-subtle text-primary-emphasis rounded-3 border border-primary-subtle mb-3 small">
+                        <div class="fw-bold mb-1"><i class="bi bi-person-bounding-box me-1"></i> Digital Twin Dossier Attached:</div>
+                        <div class="row g-2">
+                            <div class="col-sm-4">
+                                <span class="text-muted">Condition Risk:</span>
+                                <b>{{ twin_data.twin.current_predicted_disorder }} ({{ twin_data.twin.current_confidence }}%)</b>
+                            </div>
+                            <div class="col-sm-4">
+                                <span class="text-muted">Health Score:</span>
+                                <b>{{ twin_data.twin.current_health_score }} / 100</b>
+                            </div>
+                            <div class="col-sm-4">
+                                <span class="text-muted">Blood Pressure:</span>
+                                <b>{{ twin_data.twin.current_blood_pressure }} mmHg</b>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="bookingDoctorName" name="doctor_name">
+                    <input type="hidden" id="bookingSpecialty" name="specialty">
+                    <input type="hidden" id="bookingHospital" name="hospital_clinic">
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="consultation_type" class="form-label small fw-semibold text-muted">Consultation Mode</label>
+                            <select class="form-select" id="consultation_type" name="consultation_type" required>
+                                <option value="Virtual Video Teleconsultation" selected>Secure HD Video Teleconsultation (Recommended)</option>
+                                <option value="In-Clinic In-Person Visit">In-Clinic In-Person Visit</option>
+                                <option value="Phone Consultation">Audio Phone Consultation</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="time_slot" class="form-label small fw-semibold text-muted">Preferred Time Slot</label>
+                            <select class="form-select" id="time_slot" name="time_slot" required>
+                                <option value="Today at 4:30 PM">Today at 4:30 PM (Express)</option>
+                                <option value="Tomorrow at 10:00 AM" selected>Tomorrow at 10:00 AM</option>
+                                <option value="Tomorrow at 2:15 PM">Tomorrow at 2:15 PM</option>
+                                <option value="Wednesday at 11:30 AM">Wednesday at 11:30 AM</option>
+                                <option value="Thursday at 3:00 PM">Thursday at 3:00 PM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="patient_notes" class="form-label small fw-semibold text-muted">Symptoms & Questions for the Doctor (Optional)</label>
+                        <textarea class="form-control" id="patient_notes" name="patient_notes" rows="3" placeholder="Describe symptoms like morning headaches, snoring, nighttime awakenings, or fatigue duration..."></textarea>
+                    </div>
+
+                    <div class="form-check p-3 bg-light rounded-3 border">
+                        <input class="form-check-input" type="checkbox" id="share_twin_consent" checked>
+                        <label class="form-check-label small text-dark" for="share_twin_consent">
+                            <strong>1-Click Clinical Handoff:</strong> Securely transmit my Digital Twin parameters, CatBoost risk probabilities, top SHAP factors, and facial fatigue score directly to the doctor's electronic health record (EHR).
+                        </label>
+                    </div>
+
+                </div>
+                
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" id="btnConfirmBooking" class="btn btn-primary rounded-pill px-4 shadow">
+                        <i class="bi bi-check2-circle me-1"></i> Confirm & Book Consultation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let currentModal = null;
+
+    function openBookingModal(name, specialty, hospital) {
+        document.getElementById('modalDoctorName').textContent = name;
+        document.getElementById('modalDoctorSpecialty').textContent = specialty;
+        document.getElementById('modalDoctorHospital').textContent = hospital;
+
+        document.getElementById('bookingDoctorName').value = name;
+        document.getElementById('bookingSpecialty').value = specialty;
+        document.getElementById('bookingHospital').value = hospital;
+
+        const modalEl = document.getElementById('bookingModal');
+        currentModal = new bootstrap.Modal(modalEl);
+        currentModal.show();
+    }
+
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnConfirmBooking');
+        const origText = btn.innerHTML;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Confirming with Hospital...`;
+        btn.disabled = true;
+
+        const payload = {
+            doctor_name: document.getElementById('bookingDoctorName').value,
+            specialty: document.getElementById('bookingSpecialty').value,
+            hospital_clinic: document.getElementById('bookingHospital').value,
+            consultation_type: document.getElementById('consultation_type').value,
+            time_slot: document.getElementById('time_slot').value,
+            patient_notes: document.getElementById('patient_notes').value
+        };
+
+        fetch('/api/consultation/book', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert("Consultation Confirmed! A secure video link has been generated and your Digital Twin has been shared with " + payload.doctor_name);
+                window.location.reload();
+            } else {
+                alert("Error: " + (data.message || "Failed to book consultation."));
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("An error occurred while booking. Please try again.");
+            btn.innerHTML = origText;
+            btn.disabled = false;
+        });
+    });
+
+    function cancelAppointment(id) {
+        if (!confirm("Are you sure you want to cancel this consultation?")) return;
+
+        fetch('/api/consultation/cancel/' + id, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert("Appointment cancelled successfully.");
+                window.location.reload();
+            } else {
+                alert("Error: " + (data.message || "Failed to cancel."));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error cancelling appointment.");
+        });
+    }
+</script>
+{% endblock %}
